@@ -2,15 +2,7 @@
   "name": "co-op-tns",
   "version": "1.0.0",
   "description": "Touch and Solve Micro Finance Co-operative System",
-  "main": "src/agentation-entry.jsx",
-  "scripts": {
-    "build:agentation": "esbuild src/agentation-entry.jsx --bundle --minify --sourcemap --define:process.env.NODE_ENV=\\\"development\\\" --outfile=static/js/agentation.bundle.js",
-    "watch:agentation": "esbuild src/agentation-entry.jsx --bundle --watch --outfile=static/js/agentation.bundle.js"
-  },
-  "devDependencies": {
-    "agentation": "^3.0.2",
-    "esbuild": "^0.25.0"
-  },
+  "scripts": {},
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
