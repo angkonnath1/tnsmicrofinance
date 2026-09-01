@@ -1,8 +1,9 @@
 #!/bin/bash
 echo "=== Installing Python dependencies ==="
-python -m pip install -r requirements.txt
+python3 -m pip install -r requirements.txt --break-system-packages
 
 echo "=== Collecting Static Files ==="
-python manage.py collectstatic --noinput --clear
+python3 manage.py collectstatic --noinput --clear
 
 echo "=== Build Complete ==="
+
