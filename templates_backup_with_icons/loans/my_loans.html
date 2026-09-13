@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}My Loan Portfolio{% endblock %}
+{% block page_title %}My Loan Portfolio{% endblock %}
+{% block page_subtitle %}Track your active loans, installments, and repayment progress{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-blue">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Total Loan Disbursed</div>
+      <div class="stat-value">{{ total_borrowed|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+      <div class="stat-subtitle">All active &amp; completed loans</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-green">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Total Repaid</div>
+      <div class="stat-value" style="color: var(--accent);">{{ total_repaid|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+      <div class="stat-subtitle">Installments Paid</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-amber">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Active Loans</div>
+      <div class="stat-value">{{ active_loans.count }}</div>
+      <div class="stat-subtitle">{{ pending_loans.count }} Application(s) Pending</div>
+    </div>
+  </div>
+</div>
+
+<div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
+  <a href="{% url 'loans:apply_loan' %}" class="btn btn-primary">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    Apply for New Loan
+  </a>
+</div>
+
+<div class="content-card">
+  <div class="card-header">
+    <div class="card-title">My Loans &amp; Applications</div>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Loan ID</th>
+          <th>Applied Date</th>
+          <th>Principal</th>
+          <th>Interest</th>
+          <th>Total Payable</th>
+          <th>Total Paid</th>
+          <th>Repayment Progress</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for loan in loans %}
+          <tr>
+            <td><strong>{{ loan.loan_id }}</strong></td>
+            <td>{{ loan.applied_at|date:"M d, Y" }}</td>
+            <td>{{ loan.principal_amount|clean_amount }} BDT</td>
+            <td>{{ loan.total_interest|clean_amount }} BDT ({{ loan.interest_rate }}%)</td>
+            <td><strong>{{ loan.total_payable|clean_amount }} BDT</strong></td>
+            <td style="color: var(--accent); font-weight: 700;">{{ loan.total_paid|clean_amount }} BDT</td>
+            <td style="min-width: 140px;">
+              <div style="background: #e2e8f0; border-radius: 9999px; height: 8px; width: 100%; overflow: hidden; margin-bottom: 4px;">
+                <div style="background: var(--accent); height: 100%; width: {{ loan.progress_percentage }}%;"></div>
+              </div>
+              <div style="font-size: 0.7rem; color: #64748b;">{{ loan.progress_percentage }}% Paid</div>
+            </td>
+            <td>
+              <span class="badge {{ loan.get_status_badge }}">{{ loan.get_status_display }}</span>
+            </td>
+            <td>
+              {% if loan.status == 'DISBURSED' %}
+                <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-sm btn-primary" style="display: inline-flex; align-items: center; gap: 4px;">
+                  💳 Pay Phase &rarr;
+                </a>
+              {% else %}
+                <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-sm btn-outline-primary">
+                  View Detail &rarr;
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 2.5rem; color: #94a3b8;">
+              You do not have any loan applications yet. Click "Apply for New Loan" to get started.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'includes/pagination.html' %}
+</div>
+{% endblock %}

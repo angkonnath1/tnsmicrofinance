@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Members Directory{% endblock %}
+{% block page_title %}Members Directory{% endblock %}
+{% block page_subtitle %}Manage enrolled cooperative members and their portfolios{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+  <!-- Search & Filter Form -->
+  <form method="get" style="display: flex; gap: 0.75rem; flex-grow: 1; max-width: 600px;">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search by Member ID, Name, Phone, NID..." class="form-control">
+    <select name="status" class="form-select" style="max-width: 160px;" onchange="this.form.submit()">
+      <option value="">All Statuses</option>
+      <option value="ACTIVE" {% if status_filter == 'ACTIVE' %}selected{% endif %}>Active</option>
+      <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+      <option value="INACTIVE" {% if status_filter == 'INACTIVE' %}selected{% endif %}>Inactive</option>
+    </select>
+    <button type="submit" class="btn btn-secondary">Search</button>
+  </form>
+
+  <a href="{% url 'members:member_create' %}" class="btn btn-primary">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+    </svg>
+    Enroll New Member
+  </a>
+</div>
+
+<div class="content-card">
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Member ID</th>
+          <th>Full Name</th>
+          <th>Phone</th>
+          <th>National ID (NID)</th>
+          <th>Assigned Officer</th>
+          <th>Status</th>
+          <th>Joined</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in members %}
+          <tr>
+            <td>
+              <strong style="color: var(--primary);">{{ member.member_id }}</strong>
+            </td>
+            <td>
+              <div style="font-weight: 600;">{{ member.user.get_full_name|default:member.user.username }}</div>
+              <div style="font-size: 0.75rem; color: #64748b;">{{ member.occupation|default:'-' }}</div>
+            </td>
+            <td>{{ member.user.phone|default:'-' }}</td>
+            <td>{{ member.nid_number|default:'-' }}</td>
+            <td>{{ member.assigned_officer.get_full_name|default:'Unassigned' }}</td>
+            <td>
+              <span class="badge {{ member.get_status_badge }}">{{ member.get_status_display }}</span>
+            </td>
+            <td>{{ member.joined_date|date:"M d, Y" }}</td>
+            <td>
+              <div style="display: flex; gap: 0.5rem;">
+                <a href="{% url 'members:member_detail' member.id %}" class="btn btn-sm btn-outline-primary">View</a>
+                <a href="{% url 'members:member_edit' member.id %}" class="btn btn-sm btn-secondary">Edit</a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" style="text-align: center; padding: 2.5rem; color: #94a3b8;">
+              No members found matching your search.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'includes/pagination.html' %}
+</div>
+{% endblock %}

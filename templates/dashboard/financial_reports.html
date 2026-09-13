@@ -8,138 +8,131 @@
 {% block content %}
 <!-- Cashflow Summary Stats -->
 <div class="stats-grid">
-  <!-- Total Inflow: Deposits + Loan Repayments -->
-  <div class="stat-card">
-    <div class="stat-icon-wrap stat-icon-green">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
-      </svg>
-    </div>
-    <div class="stat-details">
-      <div class="stat-label">Total Inflow (Cash In)</div>
-      <div class="stat-value" style="color: var(--accent);">{{ total_deposits|add:total_repayments_collected|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
-      <div class="stat-subtitle">Deposits: {{ total_deposits|clean_amount }} | Repayments: {{ total_repayments_collected|clean_amount }}</div>
-    </div>
-  </div>
+ <!-- Total Inflow: Deposits + Loan Repayments -->
+ <div class="stat-card">
+ <div class="stat-details">
+ <div class="stat-label">Total Inflow (Cash In)</div>
+ <div class="stat-value" style="color: var(--accent);">{{ total_deposits|add:total_repayments_collected|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+ <div class="stat-subtitle">Deposits: {{ total_deposits|clean_amount }} | Repayments: {{ total_repayments_collected|clean_amount }}</div>
+ </div>
+ </div>
 
-  <!-- Total Outflow: Withdrawals + Loan Disbursements -->
-  <div class="stat-card">
-    <div class="stat-icon-wrap stat-icon-amber">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
-      </svg>
-    </div>
-    <div class="stat-details">
-      <div class="stat-label">Total Outflow (Cash Out)</div>
-      <div class="stat-value" style="color: var(--warning);">{{ total_withdrawals|add:total_loans_given|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
-      <div class="stat-subtitle">Withdrawals: {{ total_withdrawals|clean_amount }} | Loans Disbursed: {{ total_loans_given|clean_amount }}</div>
-    </div>
-  </div>
+ <!-- Total Outflow: Withdrawals + Loan Disbursements -->
+ <div class="stat-card">
+ <div class="stat-details">
+ <div class="stat-label">Total Outflow (Cash Out)</div>
+ <div class="stat-value" style="color: var(--warning);">{{ total_withdrawals|add:total_loans_given|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+ <div class="stat-subtitle">Withdrawals: {{ total_withdrawals|clean_amount }} | Loans Disbursed: {{ total_loans_given|clean_amount }}</div>
+ </div>
+ </div>
 
-  <!-- Net Cash Position -->
-  <div class="stat-card">
-    <div class="stat-icon-wrap stat-icon-blue">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-      </svg>
-    </div>
-    <div class="stat-details">
-      <div class="stat-label">Net Liquidity Inflow</div>
-      <div class="stat-value">{{ net_cash_inflow|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
-      <div class="stat-subtitle">Inflow minus Outflow</div>
-    </div>
-  </div>
+ <!-- Net Cash Position -->
+ <div class="stat-card">
+ <div class="stat-details">
+ <div class="stat-label">Net Liquidity Inflow</div>
+ <div class="stat-value">{{ net_cash_inflow|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+ <div class="stat-subtitle">Inflow minus Outflow</div>
+ </div>
+ </div>
 </div>
 
-<div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
-  <button onclick="window.print()" class="btn btn-secondary">
-    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-    </svg>
-    Print Financial Report
-  </button>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+ <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+ <a href="{% url 'core:daily_master_pdf' %}" class="btn btn-primary">
+ 
+ <strong>Download Daily Master Transactions PDF</strong>
+ </a>
+ <a href="{% url 'core:daily_master_report' %}" class="btn btn-secondary">
+ 
+ Daily All-Activity Daybook
+ </a>
+ </div>
+ <button onclick="window.print()" class="btn btn-secondary">
+ 
+ Print View
+ </button>
 </div>
 
 <!-- Two Column Breakdown -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem;">
-  <!-- Savings Ledger Audit -->
-  <div class="content-card">
-    <div class="card-header">
-      <div class="card-title">Savings Inflow/Outflow Audit</div>
-    </div>
-    <div class="table-responsive">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Member</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Method</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for trx in all_savings_transactions %}
-            <tr>
-              <td>{{ trx.created_at|date:"M d, Y" }}</td>
-              <td><strong>{{ trx.account.member.member_id }}</strong></td>
-              <td>
-                {% if trx.transaction_type == 'DEPOSIT' %}
-                  <span class="badge badge-success">Deposit</span>
-                {% else %}
-                  <span class="badge badge-danger">Withdrawal</span>
-                {% endif %}
-              </td>
-              <td><strong>{{ trx.amount|clean_amount }} BDT</strong></td>
-              <td>{{ trx.get_payment_method_display }}</td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="5" style="text-align: center; padding: 1.5rem; color: #94a3b8;">
-                No audit records.
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+ <!-- Savings Ledger Audit -->
+ <div class="content-card">
+ <div class="card-header">
+ <div class="card-title">Savings Inflow/Outflow Audit</div>
+ </div>
+ <div class="table-responsive">
+ <table class="table">
+ <thead>
+ <tr>
+ <th>Date</th>
+ <th>Member</th>
+ <th>Type</th>
+ <th>Amount</th>
+ <th>Method</th>
+ </tr>
+ </thead>
+ <tbody>
+ {% for trx in all_savings_transactions %}
+ <tr>
+ <td>{{ trx.created_at|date:"M d, Y" }}</td>
+ <td><strong>{{ trx.account.member.member_id }}</strong></td>
+ <td>
+ {% if trx.transaction_type == 'DEPOSIT' %}
+ <span class="badge badge-success">Deposit</span>
+ {% else %}
+ <span class="badge badge-danger">Withdrawal</span>
+ {% endif %}
+ </td>
+ <td><strong>{{ trx.amount|clean_amount }} BDT</strong></td>
+ <td>{{ trx.get_payment_method_display }}</td>
+ </tr>
+ {% empty %}
+ <tr>
+ <td colspan="5" style="text-align: center; padding: 1.5rem; color: #94a3b8;">
+ No audit records.
+ </td>
+ </tr>
+ {% endfor %}
+ </tbody>
+ </table>
+ </div>
+ </div>
 
-  <!-- Loan Portfolio Audit -->
-  <div class="content-card">
-    <div class="card-header">
-      <div class="card-title">Disbursed Loans Audit</div>
-    </div>
-    <div class="table-responsive">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>Loan ID</th>
-            <th>Member</th>
-            <th>Principal</th>
-            <th>Total Paid</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for loan in all_loans %}
-            <tr>
-              <td><strong>{{ loan.loan_id }}</strong></td>
-              <td>{{ loan.member.member_id }}</td>
-              <td>{{ loan.principal_amount|clean_amount }} BDT</td>
-              <td style="color: var(--accent); font-weight: 600;">{{ loan.total_paid|clean_amount }} BDT</td>
-              <td><span class="badge {{ loan.get_status_badge }}">{{ loan.get_status_display }}</span></td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="5" style="text-align: center; padding: 1.5rem; color: #94a3b8;">
-                No loans disbursed.
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+ <!-- Loan Portfolio Audit -->
+ <div class="content-card">
+ <div class="card-header">
+ <div class="card-title">Disbursed Loans Audit</div>
+ </div>
+ <div class="table-responsive">
+ <table class="table">
+ <thead>
+ <tr>
+ <th>Loan ID</th>
+ <th>Member</th>
+ <th>Principal</th>
+ <th>Total Paid</th>
+ <th>Status</th>
+ </tr>
+ </thead>
+ <tbody>
+ {% for loan in all_loans %}
+ <tr>
+ <td><strong>{{ loan.loan_id }}</strong></td>
+ <td>{{ loan.member.member_id }}</td>
+ <td>{{ loan.principal_amount|clean_amount }} BDT</td>
+ <td style="color: var(--accent); font-weight: 600;">{{ loan.total_paid|clean_amount }} BDT</td>
+ <td><span class="badge {{ loan.get_status_badge }}">{{ loan.get_status_display }}</span></td>
+ </tr>
+ {% empty %}
+ <tr>
+ <td colspan="5" style="text-align: center; padding: 1.5rem; color: #94a3b8;">
+ No loans disbursed.
+ </td>
+ </tr>
+ {% endfor %}
+ </tbody>
+ </table>
+ </div>
+ </div>
 </div>
 {% endblock %}

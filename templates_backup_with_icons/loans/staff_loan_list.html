@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Loan Portfolio Management{% endblock %}
+{% block page_title %}Loan Portfolio Management{% endblock %}
+{% block page_subtitle %}Review applications, approve/disburse loans, and monitor repayments{% endblock %}
+
+{% block content %}
+<!-- Top Metrics -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-amber">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Pending Applications</div>
+      <div class="stat-value">{{ pending_count }}</div>
+      <div class="stat-subtitle">Requires review/action</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-blue">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Active Disbursed Loans</div>
+      <div class="stat-value">{{ active_count }}</div>
+      <div class="stat-subtitle">Currently in repayment</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-green">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Completed Loans</div>
+      <div class="stat-value">{{ completed_count }}</div>
+      <div class="stat-subtitle">Fully repaid</div>
+    </div>
+  </div>
+</div>
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+  <form method="get" style="display: flex; gap: 0.75rem; flex-grow: 1; max-width: 600px;">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search by Loan ID, Member ID, Name, Purpose..." class="form-control">
+    <select name="status" class="form-select" style="max-width: 170px;" onchange="this.form.submit()">
+      <option value="">All Statuses</option>
+      <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending Review</option>
+      <option value="APPROVED" {% if status_filter == 'APPROVED' %}selected{% endif %}>Approved</option>
+      <option value="DISBURSED" {% if status_filter == 'DISBURSED' %}selected{% endif %}>Disbursed / Active</option>
+      <option value="COMPLETED" {% if status_filter == 'COMPLETED' %}selected{% endif %}>Completed</option>
+      <option value="REJECTED" {% if status_filter == 'REJECTED' %}selected{% endif %}>Rejected</option>
+    </select>
+    <button type="submit" class="btn btn-secondary">Filter</button>
+  </form>
+
+  <a href="{% url 'loans:staff_create_loan' %}" class="btn btn-primary">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    Create Loan for Member
+  </a>
+</div>
+
+<div class="content-card">
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Loan ID</th>
+          <th>Member</th>
+          <th>Principal</th>
+          <th>Interest</th>
+          <th>Total Payable</th>
+          <th>Total Paid</th>
+          <th>Progress</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for loan in loans %}
+          <tr>
+            <td>
+              <a href="{% url 'loans:loan_detail' loan.id %}" style="color: var(--primary); font-weight: 700; text-decoration: none;">
+                {{ loan.loan_id }}
+              </a>
+              <div style="font-size: 0.7rem; color: #64748b;">{{ loan.applied_at|date:"M d, Y" }}</div>
+            </td>
+            <td>
+              <a href="{% url 'members:member_detail' loan.member.id %}" style="text-decoration: none; font-weight: 600; color: var(--text-main);">
+                {{ loan.member.member_id }}
+              </a>
+              <div style="font-size: 0.75rem; color: #64748b;">{{ loan.member.user.get_full_name }}</div>
+            </td>
+            <td>{{ loan.principal_amount|clean_amount }} BDT</td>
+            <td>{{ loan.total_interest|clean_amount }} BDT</td>
+            <td><strong>{{ loan.total_payable|clean_amount }} BDT</strong></td>
+            <td style="color: var(--accent); font-weight: 600;">{{ loan.total_paid|clean_amount }} BDT</td>
+            <td style="min-width: 120px;">
+              <div style="background: #e2e8f0; border-radius: 9999px; height: 6px; width: 100%; overflow: hidden; margin-bottom: 2px;">
+                <div style="background: var(--accent); height: 100%; width: {{ loan.progress_percentage }}%;"></div>
+              </div>
+              <div style="font-size: 0.7rem; color: #64748b;">{{ loan.progress_percentage }}%</div>
+            </td>
+            <td>
+              <span class="badge {{ loan.get_status_badge }}">{{ loan.get_status_display }}</span>
+            </td>
+            <td>
+              <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-sm btn-outline-primary">
+                Manage &rarr;
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 2.5rem; color: #94a3b8;">
+              No loans found matching the criteria.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'includes/pagination.html' %}
+</div>
+{% endblock %}

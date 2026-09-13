@@ -19,7 +19,12 @@ urlpatterns = [
     path('<int:pk>/disburse/', views.disburse_loan, name='disburse_loan'),
     path('installments/<int:installment_id>/collect/', views.collect_installment, name='collect_installment'),
     path('installments/<int:installment_id>/pay/', views.member_pay_installment, name='pay_installment'),
-    path('installments/<int:installment_id>/pay-online/', views.sslcommerz_initiate_installment, name='pay_installment_online'),
+
+    # SSLCOMMERZ Loan Installment Gateway
+    path('installments/<int:installment_id>/sslcommerz/', views.sslcommerz_initiate_installment, name='sslcommerz_initiate_installment'),
+    path('sslcommerz/success/', views.sslcommerz_loan_success_view, name='sslcommerz_loan_success'),
+    path('sslcommerz/fail/', views.sslcommerz_loan_fail_view, name='sslcommerz_loan_fail'),
+    path('sslcommerz/cancel/', views.sslcommerz_loan_cancel_view, name='sslcommerz_loan_cancel'),
 
     # Schemes
     path('schemes/', views.loan_schemes_list, name='schemes_list'),
@@ -27,9 +32,5 @@ urlpatterns = [
     # Statement Generator
     path('statement/', views.loan_statement_view, name='general_statement'),
     path('<int:pk>/statement/', views.loan_statement_view, name='loan_statement'),
-
-    # SSLCOMMERZ Official Sandbox Hosted Loan Repayment Gateway
-    path('sslcommerz/success/', views.sslcommerz_loan_success_view, name='sslcommerz_loan_success'),
-    path('sslcommerz/fail/', views.sslcommerz_loan_fail_view, name='sslcommerz_loan_fail'),
-    path('sslcommerz/cancel/', views.sslcommerz_loan_cancel_view, name='sslcommerz_loan_cancel'),
 ]
+

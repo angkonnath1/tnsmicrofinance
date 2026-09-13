@@ -1,58 +1,444 @@
 {% extends 'base.html' %}
+{% load static humanize %}
 
-{% block title %}My Profile{% endblock %}
-{% block page_title %}User Profile{% endblock %}
-{% block page_subtitle %}Manage your personal account details{% endblock %}
+{% block title %}My Profile - Touch and Solve Co-operative{% endblock %}
+{% block page_title %}Member Profile{% endblock %}
+{% block page_subtitle %}Comprehensive personal and nominee records{% endblock %}
 
 {% block content %}
-<div style="max-width: 800px; margin: 0 auto;">
-  <div class="content-card">
-    <div class="card-header">
-      <div class="card-title">Personal Information</div>
-      <span class="badge {{ user.get_role_display_badge }}">{{ user.get_role_display }}</span>
-    </div>
-    <div class="card-body">
-      <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
+<div style="max-width: 1100px; margin: 0 auto;">
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">First Name</label>
-            {{ form.first_name }}
-          </div>
-          <div class="form-group">
-            <label class="form-label">Last Name</label>
-            {{ form.last_name }}
-          </div>
-        </div>
+ {% if profile %}
+ <!-- =========================================================================
+ MEMBER PROFILE VIEW (Personal & Nominee Information Only)
+ ========================================================================= -->
 
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">Email Address</label>
-            {{ form.email }}
-          </div>
-          <div class="form-group">
-            <label class="form-label">Phone Number</label>
-            {{ form.phone }}
-          </div>
-        </div>
+ <!-- 1. Member Profile Hero Header -->
+ <div class="content-card"
+ style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-left: 4px solid var(--primary);">
+ <div class="card-body" style="padding: 1.75rem 2rem;">
+ <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
 
-        <div class="form-group">
-          <label class="form-label">Address</label>
-          {{ form.address }}
-        </div>
+ <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+ <!-- Member Avatar / Photo -->
+ <div style="position: relative;">
+ {% if profile.member_photo %}
+ <img src="{{ profile.member_photo.url }}" alt="{{ user.get_full_name }}"
+ style="width: 90px; height: 90px; object-fit: cover; border-radius: var(--radius-full); border: 3px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
+ {% elif user.profile_picture %}
+ <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}"
+ style="width: 90px; height: 90px; object-fit: cover; border-radius: var(--radius-full); border: 3px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
+ {% else %}
+ <div
+ style="width: 90px; height: 90px; border-radius: var(--radius-full); background: #000000; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 800; border: 3px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
+ {{ user.first_name|default:user.username|slice:":1"|upper }}
+ </div>
+ {% endif %}
+ </div>
 
-        <div class="form-group">
-          <label class="form-label">Profile Picture</label>
-          {{ form.profile_picture }}
-        </div>
+ <!-- Name & Core Identifiers -->
+ <div>
+ <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+ <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-main);">
+ {{ user.get_full_name|default:user.username }}
+ </h2>
+ <span class="badge badge-primary"
+ style="font-size: 0.75rem; padding: 4px 8px; font-weight: 700; letter-spacing: 0.5px;">
+ {{ profile.member_id }}
+ </span>
+ </div>
 
-        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
-          <a href="{% url 'core:dashboard' %}" class="btn btn-secondary">Cancel</a>
-          <button type="submit" class="btn btn-primary">Save Changes</button>
-        </div>
-      </form>
-    </div>
-  </div>
+ <div
+ style="display: flex; align-items: center; gap: 1.25rem; margin-top: 0.5rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-muted);">
+ <span><strong>Username:</strong> @{{ user.username }}</span>
+ <span>&bull;</span>
+ <span><strong>Phone:</strong> {{ user.phone|default:'-' }}</span>
+ <span>&bull;</span>
+ <span><strong>Joined:</strong> {{ profile.joined_date|date:"F d, Y" }}</span>
+ </div>
+ </div>
+ </div>
+
+ <!-- Verification Status Indicator -->
+ <div style="display: flex; gap: 0.75rem; align-items: center;">
+ <div
+ style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); color: #065f46; padding: 0.5rem 0.9rem; border-radius: var(--radius-md); font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+ 
+ Official KYC Profile Record
+ </div>
+ </div>
+
+ </div>
+ </div>
+ </div>
+
+ <!-- 2. Two-Column Grid: Personal Details & Nominee Details -->
+ <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 1.5rem; align-items: start;">
+
+ <!-- Left Column: Full Personal Information -->
+ <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+ <!-- Personal Details Card -->
+ <div class="content-card">
+ <div class="card-body">
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Member ID</span>
+ <div class="profile-field-value" style="font-family: monospace; font-weight: 700; color: var(--primary);">
+ {{ profile.member_id }}
+ </div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Full Name</span>
+ <div class="profile-field-value">{{ user.get_full_name|default:"-" }}</div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Phone Number</span>
+ <div class="profile-field-value">{{ user.phone|default:"-" }}</div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Email Address</span>
+ <div class="profile-field-value">{{ user.email|default:"Not Provided" }}</div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">National ID (NID)</span>
+ <div class="profile-field-value" style="font-weight: 700;">
+ {{ profile.nid_number|default:"-" }}
+ </div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Gender</span>
+ <div class="profile-field-value">{{ profile.get_gender_display|default:"-" }}</div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Date of Birth</span>
+ <div class="profile-field-value">
+ {% if profile.date_of_birth %}
+ {{ profile.date_of_birth|date:"F d, Y" }}
+ {% else %}
+ -
+ {% endif %}
+ </div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Occupation</span>
+ <div class="profile-field-value">{{ profile.occupation|default:"-" }}</div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Father's / Husband's Name</span>
+ <div class="profile-field-value">{{ profile.father_or_husband_name|default:"-" }}</div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Mother's Name</span>
+ <div class="profile-field-value">{{ profile.mother_name|default:"-" }}</div>
+ </div>
+
+ </div>
+
+ <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1.25rem 0;">
+
+ <!-- Address Information -->
+ <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem;">
+ <div class="profile-field-block">
+ <span class="profile-field-label">Present Living Address</span>
+ <div class="profile-field-value" style="line-height: 1.5;">
+ {{ profile.present_address|default:user.address|default:"Not Provided" }}
+ </div>
+ </div>
+ <div class="profile-field-block">
+ <span class="profile-field-label">Permanent Address</span>
+ <div class="profile-field-value" style="line-height: 1.5;">
+ {{ profile.permanent_address|default:"Not Provided" }}
+ </div>
+ </div>
+ </div>
+
+ <!-- Document Attachments Preview -->
+ {% if profile.nid_photo or profile.member_photo %}
+ <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1.25rem 0;">
+ <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+ {% if profile.nid_photo %}
+ <div
+ style="flex: 1; min-width: 200px; padding: 0.75rem 1rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+ <span class="profile-field-label">NID Document Copy</span>
+ <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem;">
+ <span style="font-size: 0.85rem; font-weight: 600;">Uploaded National ID</span>
+ <a href="{{ profile.nid_photo.url }}" target="_blank" class="btn btn-sm btn-outline-primary"
+ style="font-size: 0.75rem; padding: 3px 8px;">
+ View Full Document </a>
+ </div>
+ </div>
+ {% endif %}
+
+ {% if profile.member_photo %}
+ <div
+ style="flex: 1; min-width: 200px; padding: 0.75rem 1rem; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--radius-md);">
+ <span class="profile-field-label">Member Photo on Record</span>
+ <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 0.5rem;">
+ <span style="font-size: 0.85rem; font-weight: 600;">Official KYC Photo</span>
+ <a href="{{ profile.member_photo.url }}" target="_blank" class="btn btn-sm btn-outline-primary"
+ style="font-size: 0.75rem; padding: 3px 8px;">
+ View Photo </a>
+ </div>
+ </div>
+ {% endif %}
+ </div>
+ {% endif %}
+
+ </div>
+ </div>
+
+ </div>
+
+ <!-- Right Column: Nominee Details & Account Overview -->
+ <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+
+ <!-- Nominee Information Card -->
+ <div class="content-card">
+ <div class="card-body">
+
+ <!-- Nominee Profile Box -->
+ <div
+ style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 0.75rem;">
+ <div style="display: flex; align-items: center; gap: 1rem;">
+ {% if profile.nominee_photo %}
+ <img src="{{ profile.nominee_photo.url }}" alt="{{ profile.nominee_name }}"
+ style="width: 60px; height: 60px; object-fit: cover; border-radius: var(--radius-full); border: 2px solid #059669; box-shadow: var(--shadow-sm);">
+ {% else %}
+ <div
+ style="width: 60px; height: 60px; border-radius: var(--radius-full); background: #d1fae5; color: #065f46; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; border: 2px solid #a7f3d0;">
+ {{ profile.nominee_name|default:"N"|slice:":1"|upper }}
+ </div>
+ {% endif %}
+
+ <div>
+ <div style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">
+ {{ profile.nominee_name|default:"No Nominee Assigned" }}
+ </div>
+ <div
+ style="display: inline-block; margin-top: 3px; font-size: 0.75rem; color: #047857; background: #d1fae5; padding: 2px 8px; border-radius: 9999px; font-weight: 700;">
+ Relationship: {{ profile.nominee_relation|default:"Not Specified" }}
+ </div>
+ </div>
+ </div>
+
+ <span class="badge badge-success" style="font-size: 0.7rem;">Designated Nominee</span>
+ </div>
+
+ <!-- Nominee Field Details -->
+ <div style="display: flex; flex-direction: column; gap: 1rem;">
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Nominee Full Name</span>
+ <div class="profile-field-value" style="font-weight: 700;">
+ {{ profile.nominee_name|default:"Not Provided" }}
+ </div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Relationship to Member</span>
+ <div class="profile-field-value">
+ {{ profile.nominee_relation|default:"Not Provided" }}
+ </div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Nominee Phone Number</span>
+ <div class="profile-field-value">
+ {{ profile.nominee_phone|default:"Not Provided" }}
+ </div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Nominee National ID (NID)</span>
+ <div class="profile-field-value">
+ {{ profile.nominee_nid|default:"Not Provided" }}
+ </div>
+ </div>
+
+ {% if profile.nominee_photo %}
+ <div class="profile-field-block">
+ <span class="profile-field-label">Nominee Document Photo</span>
+ <div style="margin-top: 4px;">
+ <a href="{{ profile.nominee_photo.url }}" target="_blank" class="btn btn-sm btn-outline-primary"
+ style="font-size: 0.75rem; padding: 3px 8px;">
+ View Nominee Photo </a>
+ </div>
+ </div>
+ {% endif %}
+
+ </div>
+
+ </div>
+ </div>
+
+
+
+ </div>
+
+ </div>
+
+
+
+ {% else %}
+ <!-- =========================================================================
+ OFFICER / STAFF / ADMIN PROFILE VIEW (Information Cards + Operational Stats)
+ ========================================================================= -->
+
+ <!-- 1. Officer Hero Header Card -->
+ <div class="content-card"
+ style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-left: 4px solid var(--primary);">
+ <div class="card-body" style="padding: 1.75rem 2rem;">
+ <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem;">
+
+ <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+ <!-- Officer Avatar / Photo -->
+ <div style="position: relative;">
+ {% if user.profile_picture %}
+ <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}"
+ style="width: 90px; height: 90px; object-fit: cover; border-radius: var(--radius-full); border: 3px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
+ {% else %}
+ <div
+ style="width: 90px; height: 90px; border-radius: var(--radius-full); background: #1e293b; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; font-weight: 800; border: 3px solid #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
+ {{ user.first_name|default:user.username|slice:":1"|upper }}
+ </div>
+ {% endif %}
+ </div>
+
+ <!-- Officer Info -->
+ <div>
+ <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+ <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: var(--text-main);">
+ {{ user.get_full_name|default:user.username }}
+ </h2>
+ <span class="badge {{ user.get_role_display_badge }}"
+ style="font-size: 0.75rem; padding: 4px 8px; font-weight: 700;">
+ {{ user.get_role_display }}
+ </span>
+ </div>
+
+ <div
+ style="display: flex; align-items: center; gap: 1.25rem; margin-top: 0.5rem; flex-wrap: wrap; font-size: 0.85rem; color: var(--text-muted);">
+ <span><strong>Username:</strong> @{{ user.username }}</span>
+ <span>&bull;</span>
+ <span><strong>Official Phone:</strong> {{ user.phone|default:'-' }}</span>
+ <span>&bull;</span>
+ <span><strong>Joined:</strong> {{ user.date_joined|date:"F d, Y" }}</span>
+ </div>
+ </div>
+ </div>
+
+ <!-- Status Badge -->
+ <div style="display: flex; gap: 0.75rem; align-items: center;">
+ <div
+ style="background: rgba(37, 99, 235, 0.1); border: 1px solid rgba(37, 99, 235, 0.3); color: #1d4ed8; padding: 0.5rem 0.9rem; border-radius: var(--radius-md); font-size: 0.8rem; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;">
+ 
+ Official Staff Profile Record
+ </div>
+ </div>
+
+ </div>
+ </div>
+ </div>
+
+ <!-- 2. Officer Information Card -->
+ <div class="content-card">
+ <div class="card-body">
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Full Name</span>
+ <div class="profile-field-value" style="font-weight: 700;">{{ user.get_full_name|default:user.username }}
+ </div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Username</span>
+ <div class="profile-field-value" style="font-family: monospace; font-weight: 700; color: var(--primary);">@{{
+ user.username }}</div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Designation / Role</span>
+ <div class="profile-field-value">
+ <span class="badge {{ user.get_role_display_badge }}">{{ user.get_role_display }}</span>
+ </div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Contact Phone</span>
+ <div class="profile-field-value">{{ user.phone|default:"Not Provided" }}</div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Official Email Address</span>
+ <div class="profile-field-value">{{ user.email|default:"Not Provided" }}</div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Account Status</span>
+ <div class="profile-field-value">
+ <span class="badge badge-success">Active &amp; Authorized</span>
+ </div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Date Joined</span>
+ <div class="profile-field-value">{{ user.date_joined|date:"F d, Y" }}</div>
+ </div>
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Last Login</span>
+ <div class="profile-field-value">{{ user.last_login|date:"F d, Y h:i A"|default:"Recently active" }}</div>
+ </div>
+
+ </div>
+
+ <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 1.5rem 0;">
+
+ <div class="profile-field-block">
+ <span class="profile-field-label">Office / Residential Address</span>
+ <div class="profile-field-value" style="line-height: 1.6;">
+ {{ user.address|default:"Touch & Solve Microfinance Head Office / Field Station" }}
+ </div>
+ </div>
+
+ </div>
+ </div>
+ {% endif %}
+
 </div>
+
+<!-- Helper Styles for Profile Field Display -->
+<style>
+ .profile-field-block {
+ display: flex;
+ flex-direction: column;
+ gap: 3px;
+ }
+
+ .profile-field-label {
+ font-size: 0.72rem;
+ font-weight: 700;
+ text-transform: uppercase;
+ letter-spacing: 0.6px;
+ color: #64748b;
+ }
+
+ .profile-field-value {
+ font-size: 0.92rem;
+ color: var(--text-main);
+ font-weight: 500;
+ }
+</style>
 {% endblock %}

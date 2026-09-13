@@ -8,283 +8,280 @@
 {% block content %}
 <!-- Top Filter Bar (Hidden on Print) -->
 <div class="content-card no-print" style="margin-bottom: 1.5rem;">
-  <div class="card-header">
-    <div class="card-title">Daily Sheet Parameters</div>
-  </div>
-  <div class="card-body">
-    <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
-      <div class="form-group" style="margin-bottom: 0;">
-        <label class="form-label">Select Date</label>
-        <input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}">
-      </div>
+ <div class="card-header">
+ <div class="card-title">Daily Sheet Parameters</div>
+ </div>
+ <div class="card-body">
+ <form method="get" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+ <div class="form-group" style="margin-bottom: 0;">
+ <label class="form-label">Select Date</label>
+ <input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}">
+ </div>
 
-      <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
-        <label class="form-label">Assigned Field Officer</label>
-        <select name="officer" class="form-select">
-          <option value="">All Field Officers</option>
-          {% for off in all_officers %}
-            <option value="{{ off.id }}" {% if selected_officer_id == off.id|stringformat:"s" %}selected{% endif %}>
-              {{ off.get_full_name|default:off.username }}
-            </option>
-          {% endfor %}
-        </select>
-      </div>
+ <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
+ <label class="form-label">Assigned Field Officer</label>
+ <select name="officer" class="form-select">
+ <option value="">All Field Officers</option>
+ {% for off in all_officers %}
+ <option value="{{ off.id }}" {% if selected_officer_id == off.id|stringformat:"s" %}selected{% endif %}>
+ {{ off.get_full_name|default:off.username }}
+ </option>
+ {% endfor %}
+ </select>
+ </div>
 
-      <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
-        <button type="submit" class="btn btn-secondary" style="height: 40px;">
-          Filter View &rarr;
-        </button>
-        <a href="?date={{ selected_date|date:'Y-m-d' }}{% if selected_officer_id %}&officer={{ selected_officer_id }}{% endif %}&format=pdf" class="btn btn-primary" style="height: 40px; display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); border: none;">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 16px; height: 16px;">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          <strong>Download Official PDF</strong>
-        </a>
-      </div>
-    </form>
-  </div>
+ <div style="display: flex; gap: 0.5rem; align-items: flex-end;">
+ <button type="submit" class="btn btn-secondary" style="height: 40px;">
+ Filter View </button>
+ <button type="button" onclick="window.print()" class="btn btn-primary" style="height: 40px; display: inline-flex; align-items: center; gap: 6px;">
+ 
+ <strong>Print / Save as PDF</strong>
+ </button>
+ </div>
+ </form>
+ </div>
 </div>
 
 <!-- Printable Daily Collection Sheet Document -->
 <div class="content-card statement-document" style="background: white; padding: 2.5rem; border-radius: var(--radius-md); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);">
-  
-  <!-- Sheet Header -->
-  <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--primary); padding-bottom: 1.25rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
-    <div>
-      <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-        <div style="width: 36px; height: 36px; border-radius: 6px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem;">
-          TNS
-        </div>
-        <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0;">
-          Touch &amp; Solve Micro Finance
-        </h2>
-      </div>
-      <p style="font-size: 0.8rem; color: #64748b; margin: 0;">
-        Daily Field Operations &bull; Collection &amp; Recovery Sheet
-      </p>
-    </div>
+ 
+ <!-- Sheet Header -->
+ <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--primary); padding-bottom: 1.25rem; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+ <div>
+ <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+ <div style="width: 36px; height: 36px; border-radius: 6px; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem;">
+ TNS
+ </div>
+ <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0;">
+ Touch &amp; Solve Micro Finance
+ </h2>
+ </div>
+ <p style="font-size: 0.8rem; color: #64748b; margin: 0;">
+ Daily Field Operations &bull; Collection &amp; Recovery Sheet
+ </p>
+ </div>
 
-    <div style="text-align: right;">
-      <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Collection Date</div>
-      <div style="font-weight: 800; color: var(--primary); font-size: 1.15rem;">
-        {{ selected_date|date:"F d, Y (l)" }}
-      </div>
-      <div style="font-size: 0.7rem; color: #64748b; margin-top: 2px;">
-        Generated on {{ generated_at|date:"M d, Y h:i A" }}
-      </div>
-    </div>
-  </div>
+ <div style="text-align: right;">
+ <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 700;">Collection Date</div>
+ <div style="font-weight: 800; color: var(--primary); font-size: 1.15rem;">
+ {{ selected_date|date:"F d, Y (l)" }}
+ </div>
+ <div style="font-size: 0.7rem; color: #64748b; margin-top: 2px;">
+ Generated on {{ generated_at|date:"M d, Y h:i A" }}
+ </div>
+ </div>
+ </div>
 
-  <!-- Summary KPI Cards -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-    <div style="background: #ecfdf5; padding: 1rem; border-radius: var(--radius-sm); border-left: 3px solid #10b981;">
-      <div style="font-size: 0.7rem; text-transform: uppercase; color: #065f46; font-weight: 700;">Grand Total Collection</div>
-      <div style="font-size: 1.3rem; font-weight: 800; color: #047857; margin-top: 4px;">
-        {{ grand_total_collected|clean_amount }} <span style="font-size: 0.75rem;">BDT</span>
-      </div>
-    </div>
+ <!-- Summary KPI Cards -->
+ <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+ <div style="background: #ecfdf5; padding: 1rem; border-radius: var(--radius-sm); border-left: 3px solid #10b981;">
+ <div style="font-size: 0.7rem; text-transform: uppercase; color: #065f46; font-weight: 700;">Grand Total Collection</div>
+ <div style="font-size: 1.3rem; font-weight: 800; color: #047857; margin-top: 4px;">
+ {{ grand_total_collected|clean_amount }} <span style="font-size: 0.75rem;">BDT</span>
+ </div>
+ </div>
 
-    <div style="background: var(--primary-light); padding: 1rem; border-radius: var(--radius-sm); border-left: 3px solid var(--primary);">
-      <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--primary); font-weight: 700;">Savings Deposits</div>
-      <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary); margin-top: 4px;">
-        {{ total_deposit_collection|clean_amount }} <span style="font-size: 0.75rem;">BDT</span>
-      </div>
-    </div>
+ <div style="background: var(--primary-light); padding: 1rem; border-radius: var(--radius-sm); border-left: 3px solid var(--primary);">
+ <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--primary); font-weight: 700;">Savings Deposits</div>
+ <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary); margin-top: 4px;">
+ {{ total_deposit_collection|clean_amount }} <span style="font-size: 0.75rem;">BDT</span>
+ </div>
+ </div>
 
-    <div style="background: #f1f5f9; padding: 1rem; border-radius: var(--radius-sm); border-left: 3px solid #64748b;">
-      <div style="font-size: 0.7rem; text-transform: uppercase; color: #475569; font-weight: 700;">Loan Installments</div>
-      <div style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-top: 4px;">
-        {{ total_installment_collection|clean_amount }} <span style="font-size: 0.75rem;">BDT</span>
-      </div>
-    </div>
+ <div style="background: #f1f5f9; padding: 1rem; border-radius: var(--radius-sm); border-left: 3px solid #64748b;">
+ <div style="font-size: 0.7rem; text-transform: uppercase; color: #475569; font-weight: 700;">Loan Installments</div>
+ <div style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-top: 4px;">
+ {{ total_installment_collection|clean_amount }} <span style="font-size: 0.75rem;">BDT</span>
+ </div>
+ </div>
 
-    <div style="background: #fffbeb; padding: 1rem; border-radius: var(--radius-sm); border-left: 3px solid #f59e0b;">
-      <div style="font-size: 0.7rem; text-transform: uppercase; color: #92400e; font-weight: 700;">Cash vs Digital</div>
-      <div style="font-size: 0.95rem; font-weight: 700; color: #b45309; margin-top: 4px;">
-        Cash: {{ cash_deposits|clean_amount }} BDT<br>
-        <span style="font-size: 0.8rem; color: #64748b;">Digital: {{ digital_deposits|clean_amount }} BDT</span>
-      </div>
-    </div>
-  </div>
+ <div style="background: #fffbeb; padding: 1rem; border-radius: var(--radius-sm); border-left: 3px solid #f59e0b;">
+ <div style="font-size: 0.7rem; text-transform: uppercase; color: #92400e; font-weight: 700;">Cash vs Digital</div>
+ <div style="font-size: 0.95rem; font-weight: 700; color: #b45309; margin-top: 4px;">
+ Cash: {{ cash_deposits|clean_amount }} BDT<br>
+ <span style="font-size: 0.8rem; color: #64748b;">Digital: {{ digital_deposits|clean_amount }} BDT</span>
+ </div>
+ </div>
+ </div>
 
-  <!-- Section 1: Realized Collections Today -->
-  <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
-    <span>💰</span> 1. Realized Collections on {{ selected_date|date:"M d, Y" }}
-  </h4>
+ <!-- Section 1: Realized Collections Today -->
+ <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+ <span></span> 1. Realized Collections on {{ selected_date|date:"M d, Y" }}
+ </h4>
 
-  <div class="table-responsive" style="margin-bottom: 2rem;">
-    <table class="table" style="font-size: 0.85rem;">
-      <thead>
-        <tr style="background: #f8fafc;">
-          <th>Date</th>
-          <th>Type</th>
-          <th>Member ID</th>
-          <th>Member Name</th>
-          <th>Details / Ref</th>
-          <th>Method</th>
-          <th>Collector</th>
-          <th style="text-align: right;">Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Savings Deposits -->
-        {% for dep in deposits %}
-          <tr>
-            <td>{{ dep.created_at|date:"M d, Y" }}</td>
-            <td><span style="color: #059669; font-weight: 700;">Savings Deposit</span></td>
-            <td><strong>{{ dep.account.member.member_id }}</strong></td>
-            <td>{{ dep.account.member.user.get_full_name }}</td>
-            <td>{{ dep.reference_note|default:'Regular Savings' }}</td>
-            <td>{{ dep.get_payment_method_display }}</td>
-            <td>{{ dep.created_by.get_full_name|default:dep.created_by.username }}</td>
-            <td style="text-align: right; font-weight: 700; color: #059669;">+{{ dep.amount|clean_amount }} BDT</td>
-          </tr>
-        {% endfor %}
+ <div class="table-responsive" style="margin-bottom: 2rem;">
+ <table class="table" style="font-size: 0.85rem;">
+ <thead>
+ <tr style="background: #f8fafc;">
+ <th>Date</th>
+ <th>Type</th>
+ <th>Member ID</th>
+ <th>Member Name</th>
+ <th>Details / Ref</th>
+ <th>Method</th>
+ <th>Collector</th>
+ <th style="text-align: right;">Amount</th>
+ </tr>
+ </thead>
+ <tbody>
+ <!-- Savings Deposits -->
+ {% for dep in deposits %}
+ <tr>
+ <td>{{ dep.created_at|date:"M d, Y" }}</td>
+ <td><span style="color: #059669; font-weight: 700;">Savings Deposit</span></td>
+ <td><strong>{{ dep.account.member.member_id }}</strong></td>
+ <td>{{ dep.account.member.user.get_full_name }}</td>
+ <td>{{ dep.reference_note|default:'Regular Savings' }}</td>
+ <td>{{ dep.get_payment_method_display }}</td>
+ <td>{{ dep.created_by.get_full_name|default:dep.created_by.username }}</td>
+ <td style="text-align: right; font-weight: 700; color: #059669;">+{{ dep.amount|clean_amount }} BDT</td>
+ </tr>
+ {% endfor %}
 
-        <!-- Loan Installments Paid -->
-        {% for inst in installments_paid %}
-          <tr>
-            <td>{{ inst.paid_date|date:"M d, Y" }}</td>
-            <td><span style="color: var(--primary); font-weight: 700;">Loan Inst #{{ inst.installment_number }}</span></td>
-            <td><strong>{{ inst.loan.member.member_id }}</strong></td>
-            <td>{{ inst.loan.member.user.get_full_name }}</td>
-            <td>{{ inst.loan.loan_id }} ({{ inst.loan.loan_product.name }})</td>
-            <td>Cash / Counter</td>
-            <td>{{ inst.collected_by.get_full_name|default:'Officer' }}</td>
-            <td style="text-align: right; font-weight: 700; color: var(--primary);">+{{ inst.paid_amount|clean_amount }} BDT</td>
-          </tr>
-        {% endfor %}
+ <!-- Loan Installments Paid -->
+ {% for inst in installments_paid %}
+ <tr>
+ <td>{{ inst.paid_date|date:"M d, Y" }}</td>
+ <td><span style="color: var(--primary); font-weight: 700;">Loan Inst #{{ inst.installment_number }}</span></td>
+ <td><strong>{{ inst.loan.member.member_id }}</strong></td>
+ <td>{{ inst.loan.member.user.get_full_name }}</td>
+ <td>{{ inst.loan.loan_id }} ({{ inst.loan.loan_product.name }})</td>
+ <td>Cash / Counter</td>
+ <td>{{ inst.collected_by.get_full_name|default:'Officer' }}</td>
+ <td style="text-align: right; font-weight: 700; color: var(--primary);">+{{ inst.paid_amount|clean_amount }} BDT</td>
+ </tr>
+ {% endfor %}
 
-        {% if not deposits and not installments_paid %}
-          <tr>
-            <td colspan="8" style="text-align: center; padding: 2rem; color: #94a3b8;">
-              No collections recorded for this date yet.
-            </td>
-          </tr>
-        {% else %}
-          <tr style="background: #f1f5f9; font-weight: 800; border-top: 2px solid var(--border-color);">
-            <td colspan="7">Total Realized Collection</td>
-            <td style="text-align: right; color: #047857; font-size: 1rem;">
-              {{ grand_total_collected|clean_amount }} BDT
-            </td>
-          </tr>
-        {% endif %}
-      </tbody>
-    </table>
-  </div>
+ {% if not deposits and not installments_paid %}
+ <tr>
+ <td colspan="8" style="text-align: center; padding: 2rem; color: #94a3b8;">
+ No collections recorded for this date yet.
+ </td>
+ </tr>
+ {% else %}
+ <tr style="background: #f1f5f9; font-weight: 800; border-top: 2px solid var(--border-color);">
+ <td colspan="7">Total Realized Collection</td>
+ <td style="text-align: right; color: #047857; font-size: 1rem;">
+ {{ grand_total_collected|clean_amount }} BDT
+ </td>
+ </tr>
+ {% endif %}
+ </tbody>
+ </table>
+ </div>
 
-  <!-- Section 2: Installments Due on this Date -->
-  {% if due_installments %}
-    <h4 style="font-size: 0.95rem; font-weight: 700; color: #b45309; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
-      <span>⏰</span> 2. Installments Scheduled / Due on {{ selected_date|date:"M d, Y" }}
-    </h4>
-    <div class="table-responsive" style="margin-bottom: 2rem;">
-      <table class="table" style="font-size: 0.85rem;">
-        <thead>
-          <tr style="background: #fffbeb;">
-            <th>Loan ID</th>
-            <th>Member ID</th>
-            <th>Member Name</th>
-            <th>Phone</th>
-            <th>Inst #</th>
-            <th>Principal</th>
-            <th>Interest</th>
-            <th style="text-align: right;">Due Amount</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for d_inst in due_installments %}
-            <tr>
-              <td><strong>{{ d_inst.loan.loan_id }}</strong></td>
-              <td><strong style="color: var(--primary);">{{ d_inst.loan.member.member_id }}</strong></td>
-              <td>{{ d_inst.loan.member.user.get_full_name }}</td>
-              <td>{{ d_inst.loan.member.user.phone|default:'-' }}</td>
-              <td>#{{ d_inst.installment_number }}</td>
-              <td>{{ d_inst.principal_amount|clean_amount }}</td>
-              <td>{{ d_inst.interest_amount|clean_amount }}</td>
-              <td style="text-align: right; font-weight: 700; color: #dc2626;">{{ d_inst.total_amount|clean_amount }} BDT</td>
-              <td><span class="badge {{ d_inst.get_status_badge }}">{{ d_inst.get_status_display }}</span></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% endif %}
+ <!-- Section 2: Installments Due on this Date -->
+ {% if due_installments %}
+ <h4 style="font-size: 0.95rem; font-weight: 700; color: #b45309; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+ <span>⏰</span> 2. Installments Scheduled / Due on {{ selected_date|date:"M d, Y" }}
+ </h4>
+ <div class="table-responsive" style="margin-bottom: 2rem;">
+ <table class="table" style="font-size: 0.85rem;">
+ <thead>
+ <tr style="background: #fffbeb;">
+ <th>Loan ID</th>
+ <th>Member ID</th>
+ <th>Member Name</th>
+ <th>Phone</th>
+ <th>Inst #</th>
+ <th>Principal</th>
+ <th>Interest</th>
+ <th style="text-align: right;">Due Amount</th>
+ <th>Status</th>
+ </tr>
+ </thead>
+ <tbody>
+ {% for d_inst in due_installments %}
+ <tr>
+ <td><strong>{{ d_inst.loan.loan_id }}</strong></td>
+ <td><strong style="color: var(--primary);">{{ d_inst.loan.member.member_id }}</strong></td>
+ <td>{{ d_inst.loan.member.user.get_full_name }}</td>
+ <td>{{ d_inst.loan.member.user.phone|default:'-' }}</td>
+ <td>#{{ d_inst.installment_number }}</td>
+ <td>{{ d_inst.principal_amount|clean_amount }}</td>
+ <td>{{ d_inst.interest_amount|clean_amount }}</td>
+ <td style="text-align: right; font-weight: 700; color: #dc2626;">{{ d_inst.total_amount|clean_amount }} BDT</td>
+ <td><span class="badge {{ d_inst.get_status_badge }}">{{ d_inst.get_status_display }}</span></td>
+ </tr>
+ {% endfor %}
+ </tbody>
+ </table>
+ </div>
+ {% endif %}
 
-  <!-- Section 3: Active Member Field Collection Roster -->
-  <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
-    <span>👥</span> 3. Member Field Roster &amp; Collection Sheet
-  </h4>
+ <!-- Section 3: Active Member Field Collection Roster -->
+ <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+ <span>👥</span> 3. Member Field Roster &amp; Collection Sheet
+ </h4>
 
-  <div class="table-responsive" style="margin-bottom: 2.5rem;">
-    <table class="table" style="font-size: 0.82rem;">
-      <thead>
-        <tr style="background: #f8fafc;">
-          <th>Member ID</th>
-          <th>Member Name &amp; Contact</th>
-          <th>Savings Balance</th>
-          <th>Active Loan Dues</th>
-          <th style="width: 120px; text-align: center;">Deposit Collected</th>
-          <th style="width: 120px; text-align: center;">Loan Collected</th>
-          <th style="width: 130px; text-align: center;">Member Signature</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for member in members %}
-          <tr>
-            <td><strong style="color: var(--primary);">{{ member.member_id }}</strong></td>
-            <td>
-              <div style="font-weight: 700;">{{ member.user.get_full_name }}</div>
-              <div style="font-size: 0.72rem; color: #64748b;">{{ member.user.phone|default:'-' }}</div>
-            </td>
-            <td><strong>{{ member.savings_account.balance|default:"0"|clean_amount }} BDT</strong></td>
-            <td>
-              {% for loan in member.loans.all %}
-                {% if loan.status == 'DISBURSED' %}
-                  <div style="font-size: 0.75rem; margin-bottom: 2px;">
-                    <strong>{{ loan.loan_id }}</strong>: Due {{ loan.remaining_balance|clean_amount }} BDT
-                  </div>
-                {% endif %}
-              {% empty %}
-                <span style="color: #94a3b8; font-size: 0.75rem;">None</span>
-              {% endfor %}
-            </td>
-            <td style="border-left: 1px dashed #cbd5e1; text-align: center;"></td>
-            <td style="border-left: 1px dashed #cbd5e1; text-align: center;"></td>
-            <td style="border-left: 1px dashed #cbd5e1; text-align: center;"></td>
-          </tr>
-        {% empty %}
-          <tr>
-            <td colspan="7" style="text-align: center; padding: 2rem; color: #94a3b8;">
-              No active members enrolled.
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+ <div class="table-responsive" style="margin-bottom: 2.5rem;">
+ <table class="table" style="font-size: 0.82rem;">
+ <thead>
+ <tr style="background: #f8fafc;">
+ <th>Member ID</th>
+ <th>Member Name &amp; Contact</th>
+ <th>Savings Balance</th>
+ <th>Active Loan Dues</th>
+ <th style="width: 120px; text-align: center;">Deposit Collected</th>
+ <th style="width: 120px; text-align: center;">Loan Collected</th>
+ <th style="width: 130px; text-align: center;">Member Signature</th>
+ </tr>
+ </thead>
+ <tbody>
+ {% for member in members %}
+ <tr>
+ <td><strong style="color: var(--primary);">{{ member.member_id }}</strong></td>
+ <td>
+ <div style="font-weight: 700;">{{ member.user.get_full_name }}</div>
+ <div style="font-size: 0.72rem; color: #64748b;">{{ member.user.phone|default:'-' }}</div>
+ </td>
+ <td><strong>{{ member.savings_account.balance|default:"0"|clean_amount }} BDT</strong></td>
+ <td>
+ {% for loan in member.loans.all %}
+ {% if loan.status == 'DISBURSED' %}
+ <div style="font-size: 0.75rem; margin-bottom: 2px;">
+ <strong>{{ loan.loan_id }}</strong>: Due {{ loan.remaining_balance|clean_amount }} BDT
+ </div>
+ {% endif %}
+ {% empty %}
+ <span style="color: #94a3b8; font-size: 0.75rem;">None</span>
+ {% endfor %}
+ </td>
+ <td style="border-left: 1px dashed #cbd5e1; text-align: center;"></td>
+ <td style="border-left: 1px dashed #cbd5e1; text-align: center;"></td>
+ <td style="border-left: 1px dashed #cbd5e1; text-align: center;"></td>
+ </tr>
+ {% empty %}
+ <tr>
+ <td colspan="7" style="text-align: center; padding: 2rem; color: #94a3b8;">
+ No active members enrolled.
+ </td>
+ </tr>
+ {% endfor %}
+ </tbody>
+ </table>
+ </div>
 
-  <!-- Signatures -->
-  <div style="display: flex; justify-content: space-between; margin-top: 4rem; padding-top: 1rem; text-align: center; font-size: 0.8rem; color: #64748b;">
-    <div style="width: 180px; border-top: 1px dashed #94a3b8; padding-top: 6px;">
-      Field Officer / Agent
-    </div>
-    <div style="width: 180px; border-top: 1px dashed #94a3b8; padding-top: 6px;">
-      Cashier / Accountant
-    </div>
-    <div style="width: 180px; border-top: 1px dashed #94a3b8; padding-top: 6px;">
-      Branch Manager
-    </div>
-  </div>
+ <!-- Signatures -->
+ <div style="display: flex; justify-content: space-between; margin-top: 4rem; padding-top: 1rem; text-align: center; font-size: 0.8rem; color: #64748b;">
+ <div style="width: 180px; border-top: 1px dashed #94a3b8; padding-top: 6px;">
+ Field Officer / Agent
+ </div>
+ <div style="width: 180px; border-top: 1px dashed #94a3b8; padding-top: 6px;">
+ Cashier / Accountant
+ </div>
+ <div style="width: 180px; border-top: 1px dashed #94a3b8; padding-top: 6px;">
+ Branch Manager
+ </div>
+ </div>
 </div>
 
 <style>
 @media print {
-  body { background: white !important; padding: 0 !important; }
-  .app-sidebar, .top-navbar, .no-print, .pagination-wrapper { display: none !important; }
-  .app-content { padding: 0 !important; margin: 0 !important; }
-  .statement-document { border: none !important; box-shadow: none !important; padding: 0 !important; }
+ body { background: white !important; padding: 0 !important; }
+ .app-sidebar, .top-navbar, .no-print, .pagination-wrapper, #agentation-root { display: none !important; }
+ .app-content { padding: 0 !important; margin: 0 !important; }
+ .statement-document { border: none !important; box-shadow: none !important; padding: 0 !important; }
 }
 </style>
 {% endblock %}

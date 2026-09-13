@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}Enroll New Member{% endblock %}
+{% block page_title %}Enroll New Member{% endblock %}
+{% block page_subtitle %}Register a new microfinance member and create their initial savings account{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+  <div class="content-card">
+    <div class="card-header">
+      <div class="card-title">Member Registration Form</div>
+      <span class="badge badge-primary">Touch &amp; Solve</span>
+    </div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span>📸</span> 1. Photo of Member &amp; Basic Credentials
+        </h4>
+
+        <!-- Small Member Photo Preview Box -->
+        <div class="photo-upload-box">
+          <div class="photo-preview-avatar" id="member-photo-preview-box" title="Member Photo Preview">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 26px; height: 26px;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+            </svg>
+          </div>
+          <div style="flex-grow: 1;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 2px;">
+              Photo of Member (Portrait / Passport)
+            </label>
+            {{ form.member_photo }}
+            <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Upload recent front portrait photo</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name *</label>
+            {{ form.first_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name *</label>
+            {{ form.last_name }}
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Username (Unique) *</label>
+            {{ form.username }}
+            {% if form.username.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 4px;">{{ form.username.errors.0 }}</div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Initial Password *</label>
+            {{ form.password }}
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Phone Number *</label>
+            {{ form.phone }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address (Optional)</label>
+            {{ form.email }}
+          </div>
+        </div>
+
+        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 1.25rem 0 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span>🪪</span> 2. Personal &amp; KYC Details
+        </h4>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">National ID (NID) / Smart Card</label>
+            {{ form.nid_number }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Gender</label>
+            {{ form.gender }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date of Birth</label>
+            {{ form.date_of_birth }}
+          </div>
+        </div>
+
+        <!-- Small NID Photo Preview Box -->
+        <div class="photo-upload-box">
+          <div class="photo-preview-doc" id="nid-photo-preview-box" title="NID Photo Preview">
+            <span style="font-size: 0.65rem; color: #94a3b8;">NID Scan</span>
+          </div>
+          <div style="flex-grow: 1;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 2px;">
+              Photo / Scan of NID Card
+            </label>
+            {{ form.nid_photo }}
+            <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Upload NID front/back photo or scan</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Father / Husband Name</label>
+            {{ form.father_or_husband_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mother Name</label>
+            {{ form.mother_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Occupation</label>
+            {{ form.occupation }}
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Present Address</label>
+            {{ form.present_address }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Permanent Address</label>
+            {{ form.permanent_address }}
+          </div>
+        </div>
+
+        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 1.25rem 0 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span>🤝</span> 3. Nominee Information &amp; Photo
+        </h4>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nominee Full Name</label>
+            {{ form.nominee_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Relationship to Member</label>
+            {{ form.nominee_relation }}
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nominee Phone</label>
+            {{ form.nominee_phone }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nominee NID</label>
+            {{ form.nominee_nid }}
+          </div>
+        </div>
+
+        <!-- Small Nominee Photo Preview Box -->
+        <div class="photo-upload-box">
+          <div class="photo-preview-avatar" id="nominee-photo-preview-box" title="Nominee Photo Preview">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 24px; height: 24px;">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div style="flex-grow: 1;">
+            <label class="form-label" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 2px;">
+              Photo of Nominee
+            </label>
+            {{ form.nominee_photo }}
+            <div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">Upload nominee portrait photo</div>
+          </div>
+        </div>
+
+        <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 1.25rem 0 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.4rem; display: flex; align-items: center; gap: 0.5rem;">
+          <span>⚙️</span> 4. Operational Management
+        </h4>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Assigned Field Officer</label>
+            {{ form.assigned_officer }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Account Status</label>
+            {{ form.status }}
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem;">
+          <a href="{% url 'members:member_list' %}" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem;">
+            Complete Enrollment &rarr;
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function setupImagePreview(inputSelector, previewBoxId) {
+    const input = document.querySelector(inputSelector);
+    const previewBox = document.getElementById(previewBoxId);
+
+    if (input && previewBox) {
+      input.addEventListener('change', function () {
+        const file = this.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            previewBox.innerHTML = `<img src="${e.target.result}" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;">`;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    setupImagePreview('input[name="member_photo"]', 'member-photo-preview-box');
+    setupImagePreview('input[name="nid_photo"]', 'nid-photo-preview-box');
+    setupImagePreview('input[name="nominee_photo"]', 'nominee-photo-preview-box');
+  });
+</script>
+{% endblock %}

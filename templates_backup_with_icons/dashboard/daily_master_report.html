@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Daily All-Transactions Master Daybook - Touch &amp; Solve{% endblock %}
+{% block page_title %}Daily Master Transactions &amp; Audit Daybook{% endblock %}
+{% block page_subtitle %}Comprehensive audit trail of all savings deposits, withdrawals, loan disbursals, and repayments for all members{% endblock %}
+
+{% block content %}
+<!-- Executive Cash Flow Summary Matrix -->
+<div class="stats-grid">
+  <!-- Inflow: Deposits + Loan Repayments -->
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-blue">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Daily Inflow (Cash In)</div>
+      <div class="stat-value" style="color: var(--text-main);">+{{ summary.gross_inflow|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+      <div class="stat-subtitle">Deposits: {{ summary.total_deposits|clean_amount }} | Loan Coll: {{ summary.total_repayments|clean_amount }}</div>
+    </div>
+  </div>
+
+  <!-- Outflow: Withdrawals + Loan Disbursals -->
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-amber">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Daily Outflow (Cash Out)</div>
+      <div class="stat-value" style="color: var(--text-main);">-{{ summary.gross_outflow|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+      <div class="stat-subtitle">Withdrawals: {{ summary.total_withdrawals|clean_amount }} | Disbursed: {{ summary.total_disbursed|clean_amount }}</div>
+    </div>
+  </div>
+
+  <!-- Net Cash Position -->
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-green">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Net Daily Movement</div>
+      <div class="stat-value">
+        {% if summary.net_cashflow >= 0 %}+{% endif %}{{ summary.net_cashflow|clean_amount }} <span style="font-size: 0.9rem;">BDT</span>
+      </div>
+      <div class="stat-subtitle">Inflow minus Outflow</div>
+    </div>
+  </div>
+
+  <!-- Activity Volume -->
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-navy">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Daily Volume</div>
+      <div class="stat-value">{{ summary.total_trx_count }} <span style="font-size: 0.85rem; color: #64748b;">Trx</span></div>
+      <div class="stat-subtitle">{{ summary.unique_members_count }} Member(s) Engaged Today</div>
+    </div>
+  </div>
+</div>
+
+<!-- Date Selection & PDF Download Action Bar -->
+<div class="content-card" style="margin-bottom: 2rem;">
+  <div class="card-body" style="padding: 1.25rem 1.5rem;">
+    <form method="get" action="" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; justify-content: space-between;">
+      
+      <!-- Date Picker Input -->
+      <div style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;">
+        <div style="min-width: 220px;">
+          <label class="form-label" style="font-size: 0.8rem; margin-bottom: 4px;">Audit Date</label>
+          <input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}" style="height: 40px;">
+        </div>
+        <button type="submit" class="btn btn-secondary" style="height: 40px;">
+          Filter Daybook &rarr;
+        </button>
+      </div>
+
+      <!-- Action Buttons: Print / PDF -->
+      <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        <button type="button" onclick="window.print()" class="btn btn-primary" style="height: 40px; display: inline-flex; align-items: center; gap: 6px;">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          <strong>Print / Save as PDF</strong>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==========================================
+     SECTION 1: SAVINGS DEPOSITS
+     ========================================== -->
+<div class="content-card">
+  <div class="card-header">
+    <div class="card-title">
+      <span>📥</span> 1. Savings Deposits (Inflow: +{{ summary.total_deposits|clean_amount }} BDT)
+    </div>
+    <span class="badge badge-primary">{{ deposits.count }} Deposit(s)</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Trx ID</th>
+          <th>Time</th>
+          <th>Member ID &amp; Name</th>
+          <th>Savings A/C</th>
+          <th>Method</th>
+          <th>Trx Ref</th>
+          <th style="text-align: right;">Amount (BDT)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in deposits %}
+          <tr>
+            <td><strong>TXN-{{ d.id|stringformat:"05d" }}</strong></td>
+            <td>{{ d.created_at|date:"h:i A" }}</td>
+            <td>
+              <strong>{{ d.account.member.member_id }}</strong><br/>
+              <span style="font-size: 0.75rem; color: #64748b;">{{ d.account.member.user.get_full_name }}</span>
+            </td>
+            <td>{{ d.account.account_number }}</td>
+            <td>
+              <span class="badge badge-secondary">{{ d.get_payment_method_display }}</span>
+            </td>
+            <td>{{ d.reference_note|default:'-' }}</td>
+            <td style="text-align: right; font-weight: 700; color: var(--text-main);">
+              +{{ d.amount|clean_amount }} BDT
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 2rem; color: #94a3b8;">
+              No savings deposits recorded on {{ selected_date|date:"F d, Y" }}.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      {% if deposits %}
+        <tfoot>
+          <tr style="background: #f4f4f5; font-weight: 700;">
+            <td colspan="6">Subtotal Deposits:</td>
+            <td style="text-align: right; font-size: 0.95rem;">+{{ summary.total_deposits|clean_amount }} BDT</td>
+          </tr>
+        </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+<!-- ==========================================
+     SECTION 2: SAVINGS WITHDRAWALS
+     ========================================== -->
+<div class="content-card">
+  <div class="card-header">
+    <div class="card-title">
+      <span>📤</span> 2. Savings Withdrawals (Outflow: -{{ summary.total_withdrawals|clean_amount }} BDT)
+    </div>
+    <span class="badge badge-warning">{{ withdrawals.count }} Withdrawal(s)</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Trx ID</th>
+          <th>Time</th>
+          <th>Member ID &amp; Name</th>
+          <th>Savings A/C</th>
+          <th>Method</th>
+          <th>Authorized By</th>
+          <th style="text-align: right;">Amount (BDT)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for w in withdrawals %}
+          <tr>
+            <td><strong>TXN-{{ w.id|stringformat:"05d" }}</strong></td>
+            <td>{{ w.created_at|date:"h:i A" }}</td>
+            <td>
+              <strong>{{ w.account.member.member_id }}</strong><br/>
+              <span style="font-size: 0.75rem; color: #64748b;">{{ w.account.member.user.get_full_name }}</span>
+            </td>
+            <td>{{ w.account.account_number }}</td>
+            <td>
+              <span class="badge badge-secondary">{{ w.get_payment_method_display }}</span>
+            </td>
+            <td>{{ w.processed_by.get_full_name|default:w.created_by.get_full_name }}</td>
+            <td style="text-align: right; font-weight: 700; color: var(--text-main);">
+              -{{ w.amount|clean_amount }} BDT
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 2rem; color: #94a3b8;">
+              No savings withdrawals recorded on {{ selected_date|date:"F d, Y" }}.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      {% if withdrawals %}
+        <tfoot>
+          <tr style="background: #f4f4f5; font-weight: 700;">
+            <td colspan="6">Subtotal Withdrawals:</td>
+            <td style="text-align: right; font-size: 0.95rem;">-{{ summary.total_withdrawals|clean_amount }} BDT</td>
+          </tr>
+        </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+<!-- ==========================================
+     SECTION 3: LOAN DISBURSEMENTS
+     ========================================== -->
+<div class="content-card">
+  <div class="card-header">
+    <div class="card-title">
+      <span>💰</span> 3. Loan Capital Disbursed Today (Outflow: -{{ summary.total_disbursed|clean_amount }} BDT)
+    </div>
+    <span class="badge badge-danger">{{ disbursements.count }} Disbursal(s)</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Loan ID</th>
+          <th>Borrower Member</th>
+          <th>Loan Product / Scheme</th>
+          <th>Rate &amp; Duration</th>
+          <th>Approved By</th>
+          <th style="text-align: right;">Principal Disbursed (BDT)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in disbursements %}
+          <tr>
+            <td><strong>{{ l.loan_id }}</strong></td>
+            <td>
+              <strong>{{ l.member.member_id }}</strong><br/>
+              <span style="font-size: 0.75rem; color: #64748b;">{{ l.member.user.get_full_name }}</span>
+            </td>
+            <td>{{ l.loan_product.name|default:"Standard Loan" }}</td>
+            <td>{{ l.interest_rate }}% &bull; {{ l.duration_months }} Mos</td>
+            <td>{{ l.approved_by.get_full_name|default:"Admin" }}</td>
+            <td style="text-align: right; font-weight: 700; color: var(--text-main);">
+              -{{ l.principal_amount|clean_amount }} BDT
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 2rem; color: #94a3b8;">
+              No loan disbursements recorded on {{ selected_date|date:"F d, Y" }}.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      {% if disbursements %}
+        <tfoot>
+          <tr style="background: #f4f4f5; font-weight: 700;">
+            <td colspan="5">Subtotal Disbursed Capital:</td>
+            <td style="text-align: right; font-size: 0.95rem;">-{{ summary.total_disbursed|clean_amount }} BDT</td>
+          </tr>
+        </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+<!-- ==========================================
+     SECTION 4: LOAN REPAYMENTS COLLECTED
+     ========================================== -->
+<div class="content-card">
+  <div class="card-header">
+    <div class="card-title">
+      <span>💳</span> 4. Loan Installment Repayments (Inflow: +{{ summary.total_repayments|clean_amount }} BDT)
+    </div>
+    <span class="badge badge-primary">{{ installments_paid.count }} Payment(s)</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Loan ID</th>
+          <th>Phase #</th>
+          <th>Borrower Member</th>
+          <th>Principal</th>
+          <th>Interest / Fee</th>
+          <th>Method / Ref</th>
+          <th style="text-align: right;">Total Paid (BDT)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inst in installments_paid %}
+          <tr>
+            <td><strong>{{ inst.loan.loan_id }}</strong></td>
+            <td>Phase #{{ inst.installment_number }}</td>
+            <td>
+              <strong>{{ inst.loan.member.member_id }}</strong><br/>
+              <span style="font-size: 0.75rem; color: #64748b;">{{ inst.loan.member.user.get_full_name }}</span>
+            </td>
+            <td>{{ inst.principal_amount|clean_amount }} BDT</td>
+            <td>{{ inst.interest_amount|clean_amount }} BDT</td>
+            <td>
+              <span class="badge badge-secondary">{{ inst.get_payment_method_display }}</span>
+              {% if inst.payment_reference %}
+                <div style="font-size: 0.7rem; color: #64748b;">Ref: {{ inst.payment_reference }}</div>
+              {% endif %}
+            </td>
+            <td style="text-align: right; font-weight: 700; color: var(--text-main);">
+              +{{ inst.paid_amount|clean_amount }} BDT
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 2rem; color: #94a3b8;">
+              No loan installment payments collected on {{ selected_date|date:"F d, Y" }}.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      {% if installments_paid %}
+        <tfoot>
+          <tr style="background: #f4f4f5; font-weight: 700;">
+            <td colspan="6">Subtotal Repayments (Principal: {{ summary.total_principal_repaid|clean_amount }} | Interest: {{ summary.total_interest_repaid|clean_amount }}):</td>
+            <td style="text-align: right; font-size: 0.95rem;">+{{ summary.total_repayments|clean_amount }} BDT</td>
+          </tr>
+        </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+
+{% endblock %}

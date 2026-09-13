@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Apply for Loan{% endblock %}
+{% block page_title %}Apply for Loan{% endblock %}
+{% block page_subtitle %}Submit a microfinance loan application with Touch and Solve Co-operative{% endblock %}
+
+{% block content %}
+<div style="max-width: 850px; margin: 0 auto;">
+  <div class="content-card">
+    <div class="card-header">
+      <div class="card-title">Loan Application Form</div>
+      <span class="badge badge-primary">Touch &amp; Solve</span>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <h4
+          style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+          1. Loan Requirements
+        </h4>
+
+        <div class="form-group">
+          <label class="form-label">Select Loan Scheme (Optional)</label>
+          {{ form.loan_product }}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Principal Amount (BDT) *</label>
+            {{ form.principal_amount }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tenor / Duration (Months/Week) *</label>
+            {{ form.duration_months }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Installment Frequency *</label>
+            {{ form.installment_frequency }}
+          </div>
+        </div>
+
+        <!-- Dynamic loan summary preview calculator -->
+        <div id="loan-calc-summary"></div>
+
+        <script id="loan-schemes-data" type="application/json">
+          {
+            {% for scheme in schemes %}
+              "{{ scheme.id }}": {
+                "id": {{ scheme.id }},
+                "name": "{{ scheme.name|escapejs }}",
+                "rate": {{ scheme.interest_rate_percent }},
+                "min_amount": {{ scheme.min_amount }},
+                "max_amount": {{ scheme.max_amount }},
+                "duration_months": {{ scheme.duration_months }},
+                "installment_frequency": "{{ scheme.installment_frequency }}"
+              }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+          }
+        </script>
+
+        <div class="form-group" style="margin-top: 1rem;">
+          <label class="form-label">Purpose of Loan *</label>
+          {{ form.purpose }}
+        </div>
+
+        <h4
+          style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 1.5rem 0 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+          2. Guarantor Details
+        </h4>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Guarantor Name *</label>
+            {{ form.guarantor_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Guarantor Phone *</label>
+            {{ form.guarantor_phone }}
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Guarantor NID / Smart Card</label>
+            {{ form.guarantor_nid }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Relationship to Guarantor</label>
+            {{ form.guarantor_relation }}
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem;">
+          <a href="{% url 'loans:my_loans' %}" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem;">
+            Submit Application &rarr;
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}My Savings Account{% endblock %}
+{% block page_title %}My Savings Account{% endblock %}
+{% block page_subtitle %}Account No: {{ account.account_number }} &bull; Touch &amp; Solve Co-operative{% endblock %}
+
+{% block content %}
+<!-- Top Balance Cards -->
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-green">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Current Savings Balance</div>
+      <div class="stat-value" style="color: var(--accent);">{{ account.balance|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+      <div class="stat-subtitle">Available for withdrawal</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-blue">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M7 11l5-5m0 0l5 5m-5-5v12"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Total Deposited</div>
+      <div class="stat-value">{{ total_deposited|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+      <div class="stat-subtitle">Approved Deposits</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-amber">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 13l-5 5m0 0l-5-5m5 5V6"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Total Withdrawn</div>
+      <div class="stat-value">{{ total_withdrawn|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+      <div class="stat-subtitle">Approved Withdrawals</div>
+    </div>
+  </div>
+</div>
+
+<!-- Action Buttons -->
+<div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; align-items: center;">
+  <a href="{% url 'savings:add_money_online' %}" class="btn btn-primary" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.4rem; font-weight: 700; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" style="width: 18px; height: 18px;">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+    </svg>
+    <strong>SSLCOMMERZ Online Deposit</strong>
+  </a>
+  <button class="btn btn-secondary" onclick="openModal('withdrawalModal')">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+    </svg>
+    Request Withdrawal
+  </button>
+  <a href="{% url 'savings:statement' %}" class="btn btn-outline-primary" style="margin-left: auto;">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    </svg>
+    Account Statement &rarr;
+  </a>
+</div>
+
+<!-- Transaction History Table -->
+<div class="content-card">
+  <div class="card-header">
+    <div class="card-title">Savings Transaction History</div>
+    <span style="font-size: 0.8rem; color: #64748b;">{{ transactions.count }} Transactions</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Transaction Date</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Payment Method</th>
+          <th>Reference / Trx ID</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for trx in transactions %}
+          <tr>
+            <td>{{ trx.created_at|date:"M d, Y h:i A" }}</td>
+            <td>
+              {% if trx.transaction_type == 'DEPOSIT' %}
+                <strong style="color: var(--accent);">&darr; Deposit</strong>
+              {% else %}
+                <strong style="color: var(--danger);">&uarr; Withdrawal</strong>
+              {% endif %}
+            </td>
+            <td>
+              <strong>{{ trx.amount|clean_amount }} BDT</strong>
+            </td>
+            <td>{{ trx.get_payment_method_display }}</td>
+            <td>{{ trx.reference_note|default:'-' }}</td>
+            <td>
+              <span class="badge {{ trx.get_status_badge }}">{{ trx.get_status_display }}</span>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 2.5rem; color: #94a3b8;">
+              No transactions recorded yet. Click "Submit Deposit Request" to add funds.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'includes/pagination.html' %}
+</div>
+
+
+
+<!-- Modal: Withdrawal Request -->
+<div class="modal-backdrop" id="withdrawalModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Request Savings Withdrawal</h3>
+      <button class="btn-sm btn-secondary" onclick="closeModal('withdrawalModal')">&times;</button>
+    </div>
+    <form method="post" action="{% url 'savings:withdrawal_request' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Withdrawal Amount (BDT) *</label>
+          {{ withdrawal_form.amount }}
+          <div style="font-size: 0.75rem; color: #64748b; margin-top: 4px;">Available Balance: {{ account.balance|clean_amount }} BDT</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reason / Note</label>
+          {{ withdrawal_form.reference_note }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('withdrawalModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Submit Withdrawal</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

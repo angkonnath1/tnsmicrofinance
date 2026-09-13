@@ -48,7 +48,7 @@ class MemberWithdrawalRequestForm(forms.ModelForm):
 class StaffRecordDepositForm(forms.Form):
     member = forms.ModelChoiceField(
         queryset=MemberProfile.objects.filter(status='ACTIVE').select_related('user'),
-        widget=forms.Select(attrs={'class': 'form-select select2'}),
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_member'}),
         empty_label="Select Member"
     )
     amount = forms.DecimalField(
@@ -67,7 +67,7 @@ class StaffRecordDepositForm(forms.Form):
 class StaffRecordWithdrawalForm(forms.Form):
     member = forms.ModelChoiceField(
         queryset=MemberProfile.objects.filter(status='ACTIVE').select_related('user'),
-        widget=forms.Select(attrs={'class': 'form-select select2'}),
+        widget=forms.Select(attrs={'class': 'form-select', 'id': 'id_withdrawal_member'}),
         empty_label="Select Member"
     )
     amount = forms.DecimalField(

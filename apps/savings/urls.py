@@ -24,3 +24,4 @@ urlpatterns = [
     path('sslcommerz/fail/', views.sslcommerz_fail_view, name='sslcommerz_fail'),
     path('sslcommerz/cancel/', views.sslcommerz_cancel_view, name='sslcommerz_cancel'),
 ]
+

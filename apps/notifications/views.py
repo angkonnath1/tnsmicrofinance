@@ -9,13 +9,17 @@ from django.core.paginator import Paginator
 @login_required
 def notifications_list(request):
     notifications = Notification.objects.filter(user=request.user)
+    total_count = notifications.count()
+    unread_count = notifications.filter(is_read=False).count()
     paginator = Paginator(notifications, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, 'notifications/notifications_list.html', {
         'page_obj': page_obj,
-        'notifications': page_obj
+        'notifications': page_obj,
+        'total_count': total_count,
+        'unread_count': unread_count,
     })
 
 @login_required

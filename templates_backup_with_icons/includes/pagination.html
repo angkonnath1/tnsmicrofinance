@@ -1,0 +1,23 @@
+{% if page_obj.has_other_pages %}
+<div class="pagination-wrapper" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-top: 1px solid var(--border-color); background: #f8fafc; font-size: 0.85rem; flex-wrap: wrap; gap: 0.75rem;">
+  <div style="color: #64748b;">
+    Showing <strong>{{ page_obj.start_index }}</strong> to <strong>{{ page_obj.end_index }}</strong> of <strong>{{ page_obj.paginator.count }}</strong> entries
+  </div>
+
+  <div style="display: flex; gap: 0.35rem; align-items: center;">
+    {% if page_obj.has_previous %}
+      <a href="?page=1{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="btn btn-sm btn-secondary" title="First Page">&laquo; First</a>
+      <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="btn btn-sm btn-secondary">&lsaquo; Prev</a>
+    {% endif %}
+
+    <span style="padding: 0.35rem 0.75rem; font-weight: 700; color: var(--primary); background: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.8rem;">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="btn btn-sm btn-secondary">Next &rsaquo;</a>
+      <a href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}" class="btn btn-sm btn-secondary" title="Last Page">Last &raquo;</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}

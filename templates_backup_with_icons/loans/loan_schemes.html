@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Loan Schemes &amp; Products{% endblock %}
+{% block page_title %}Loan Schemes &amp; Products{% endblock %}
+{% block page_subtitle %}Configure standard loan products, interest rates, and loan durations{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <div>
+    <h3 style="font-size: 1.1rem; font-weight: 700;">Active Loan Products ({{ schemes.count }})</h3>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('addSchemeModal')">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    Add Loan Scheme
+  </button>
+</div>
+
+<div class="content-card">
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Scheme Name</th>
+          <th>Min - Max Amount</th>
+          <th>Interest Rate</th>
+          <th>Duration</th>
+          <th>Frequency</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for scheme in schemes %}
+          <tr>
+            <td>
+              <strong style="font-size: 0.9rem;">{{ scheme.name }}</strong>
+              <div style="font-size: 0.75rem; color: #64748b;">{{ scheme.description|default:'-' }}</div>
+            </td>
+            <td>{{ scheme.min_amount|clean_amount }} - {{ scheme.max_amount|clean_amount }} BDT</td>
+            <td><strong>{{ scheme.interest_rate_percent }}%</strong></td>
+            <td>{{ scheme.duration_months }} Months</td>
+            <td>{{ scheme.get_installment_frequency_display }}</td>
+            <td>
+              {% if scheme.is_active %}
+                <span class="badge badge-success">Active</span>
+              {% else %}
+                <span class="badge badge-secondary">Disabled</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 2rem; color: #94a3b8;">
+              No loan schemes configured yet. Click "Add Loan Scheme" to add one.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal: Add Scheme -->
+<div class="modal-backdrop" id="addSchemeModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Create Loan Product Scheme</h3>
+      <button class="btn-sm btn-secondary" onclick="closeModal('addSchemeModal')">&times;</button>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Scheme Name *</label>
+          {{ form.name }}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Min Amount (BDT)</label>
+            {{ form.min_amount }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Max Amount (BDT)</label>
+            {{ form.max_amount }}
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Interest Rate % (Annual/Flat)</label>
+            {{ form.interest_rate_percent }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Duration (Months)</label>
+            {{ form.duration_months }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Frequency</label>
+            {{ form.installment_frequency }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          {{ form.description }}
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+          {{ form.is_active }}
+          <label class="form-label" style="margin-bottom: 0;">Active for Member Selection</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addSchemeModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Scheme</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

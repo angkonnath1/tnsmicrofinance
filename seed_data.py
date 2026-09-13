@@ -143,70 +143,13 @@ def seed():
         member=mem1,
         defaults={
             'account_number': 'SAV-0001',
-            'balance': Decimal('7500.00'),
+            'balance': Decimal('0.00'),
         }
     )
-    sav1.balance = Decimal('7500.00')
+    sav1.balance = Decimal('0.00')
     sav1.save()
 
-    # Create savings transactions for Rahim
-    SavingsTransaction.objects.get_or_create(
-        account=sav1,
-        amount=Decimal('5000.00'),
-        transaction_type='DEPOSIT',
-        payment_method='CASH',
-        defaults={
-            'reference_note': 'Initial Member Deposit Voucher #101',
-            'status': 'APPROVED',
-            'created_by': officer1,
-            'processed_by': officer1,
-            'processed_at': timezone.now() - timedelta(days=60),
-        }
-    )
-    SavingsTransaction.objects.get_or_create(
-        account=sav1,
-        amount=Decimal('2500.00'),
-        transaction_type='DEPOSIT',
-        payment_method='BKASH',
-        defaults={
-            'reference_note': 'Monthly DPS Trx #8N2A1900',
-            'status': 'APPROVED',
-            'created_by': user_mem1,
-            'processed_by': officer1,
-            'processed_at': timezone.now() - timedelta(days=20),
-        }
-    )
-
-    # Active Loan for Rahim (50,000 BDT, 12 months)
-    loan1, _ = LoanApplication.objects.get_or_create(
-        loan_id='TNS-LN-0001',
-        defaults={
-            'member': mem1,
-            'loan_product': scheme1,
-            'principal_amount': Decimal('50000.00'),
-            'interest_rate': Decimal('10.00'),
-            'duration_months': 12,
-            'installment_frequency': 'MONTHLY',
-            'purpose': 'Purchasing extra stock for grocery retail store',
-            'guarantor_name': 'Md. Faruk',
-            'guarantor_phone': '01912345678',
-            'guarantor_nid': '198526920110009',
-            'guarantor_relation': 'Brother',
-            'status': 'DISBURSED',
-            'approved_by': officer1,
-            'approved_at': timezone.now() - timedelta(days=70),
-            'disbursed_at': timezone.now() - timedelta(days=65),
-        }
-    )
-    loan1.generate_installments()
-
-    # Mark 2 installments as paid
-    insts = list(loan1.installments.all())
-    if len(insts) >= 2:
-        insts[0].mark_as_paid(collector=officer1)
-        insts[1].mark_as_paid(collector=officer1)
-
-    # 5. Create Member 2 (Fatema Begum) - Completed Loan & Good Savings
+    # 5. Create Member 2 (Fatema Begum)
     user_mem2, _ = CustomUser.objects.get_or_create(
         username='fatema',
         defaults={
@@ -244,27 +187,13 @@ def seed():
         member=mem2,
         defaults={
             'account_number': 'SAV-0002',
-            'balance': Decimal('15000.00'),
+            'balance': Decimal('0.00'),
         }
     )
-    sav2.balance = Decimal('15000.00')
+    sav2.balance = Decimal('0.00')
     sav2.save()
 
-    SavingsTransaction.objects.get_or_create(
-        account=sav2,
-        amount=Decimal('15000.00'),
-        transaction_type='DEPOSIT',
-        payment_method='CASH',
-        defaults={
-            'reference_note': 'Fixed Deposit Slip #201',
-            'status': 'APPROVED',
-            'created_by': officer2,
-            'processed_by': officer2,
-            'processed_at': timezone.now() - timedelta(days=90),
-        }
-    )
-
-    # 6. Create Member 3 (Kamal Hossain) - Pending Loan Application
+    # 6. Create Member 3 (Kamal Hossain)
     user_mem3, _ = CustomUser.objects.get_or_create(
         username='kamal',
         defaults={
@@ -302,29 +231,13 @@ def seed():
         member=mem3,
         defaults={
             'account_number': 'SAV-0003',
-            'balance': Decimal('3200.00'),
+            'balance': Decimal('0.00'),
         }
     )
+    sav3.balance = Decimal('0.00')
+    sav3.save()
 
-    # Pending loan application for Kamal
-    LoanApplication.objects.get_or_create(
-        loan_id='TNS-LN-0002',
-        defaults={
-            'member': mem3,
-            'loan_product': scheme1,
-            'principal_amount': Decimal('30000.00'),
-            'interest_rate': Decimal('10.00'),
-            'duration_months': 6,
-            'installment_frequency': 'MONTHLY',
-            'purpose': 'Purchasing feed and chicks for poultry expansion',
-            'guarantor_name': 'Mofizur Rahman',
-            'guarantor_phone': '01712345677',
-            'guarantor_relation': 'Father',
-            'status': 'PENDING',
-        }
-    )
-
-    # 7. Create Demo Notifications
+    # 7. Create Demo Welcome Notification
     Notification.objects.get_or_create(
         user=admin_user,
         title="Welcome to Touch & Solve System",
@@ -336,29 +249,7 @@ def seed():
         }
     )
 
-    Notification.objects.get_or_create(
-        user=officer1,
-        title="Pending Loan Application #TNS-LN-0002",
-        defaults={
-            'message': 'Member Kamal Hossain (TNS-MEM-0003) submitted a loan application of 30,000 BDT.',
-            'link': '/loans/',
-            'notification_type': 'INFO',
-            'is_read': False,
-        }
-    )
-
-    Notification.objects.get_or_create(
-        user=user_mem1,
-        title="Installment Payment Recorded",
-        defaults={
-            'message': 'Your installment of 4,583.33 BDT was received successfully. Remaining balance: 45,833.34 BDT.',
-            'link': '/loans/my-loans/',
-            'notification_type': 'SUCCESS',
-            'is_read': False,
-        }
-    )
-
-    print("  - Sample Members, Savings Accounts, Loans, and Notifications created!")
+    print("  - Sample Members and Savings Accounts (0.00 balance) initialized without past money history.")
     print("\nDatabase Seeding Complete!")
     print("--------------------------------------------------")
     print("Login Credentials:")

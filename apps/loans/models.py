@@ -20,7 +20,7 @@ class LoanScheme(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.name} ({self.interest_rate_percent}% - {self.duration_months} Mos)"
+        return f"{self.name} ({self.interest_rate_percent}%)"
 
 class LoanApplication(models.Model):
     STATUS_CHOICES = (

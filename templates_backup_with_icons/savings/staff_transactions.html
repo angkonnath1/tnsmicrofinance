@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Savings &amp; Deposit Management{% endblock %}
+{% block page_title %}Savings &amp; Deposit Management{% endblock %}
+{% block page_subtitle %}Process member deposits, withdrawals, and approve pending requests{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+  <!-- Search & Filter Form -->
+  <form method="get" style="display: flex; gap: 0.75rem; flex-grow: 1; max-width: 600px;">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search by Member ID, Name, Reference..." class="form-control">
+    <select name="type" class="form-select" style="max-width: 140px;" onchange="this.form.submit()">
+      <option value="">All Types</option>
+      <option value="DEPOSIT" {% if type_filter == 'DEPOSIT' %}selected{% endif %}>Deposit</option>
+      <option value="WITHDRAWAL" {% if type_filter == 'WITHDRAWAL' %}selected{% endif %}>Withdrawal</option>
+    </select>
+    <select name="status" class="form-select" style="max-width: 150px;" onchange="this.form.submit()">
+      <option value="">All Statuses</option>
+      <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+      <option value="APPROVED" {% if status_filter == 'APPROVED' %}selected{% endif %}>Approved</option>
+      <option value="REJECTED" {% if status_filter == 'REJECTED' %}selected{% endif %}>Rejected</option>
+    </select>
+    <button type="submit" class="btn btn-secondary">Filter</button>
+  </form>
+
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <a href="{% url 'savings:statement' %}" class="btn btn-outline-primary">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      Statement Generator
+    </a>
+    <button class="btn btn-primary" onclick="openModal('recordDepositModal')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>
+      Record Deposit
+    </button>
+    <button class="btn btn-secondary" onclick="openModal('recordWithdrawalModal')">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+      </svg>
+      Record Withdrawal
+    </button>
+  </div>
+</div>
+
+<div class="content-card">
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Member</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Reference / Notes</th>
+          <th>Status</th>
+          <th>Processed By</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for trx in transactions %}
+          <tr>
+            <td>{{ trx.created_at|date:"M d, Y H:i" }}</td>
+            <td>
+              <a href="{% url 'members:member_detail' trx.account.member.id %}" style="text-decoration: none; font-weight: 700; color: var(--primary);">
+                {{ trx.account.member.member_id }}
+              </a>
+              <div style="font-size: 0.75rem; color: #64748b;">{{ trx.account.member.user.get_full_name }}</div>
+            </td>
+            <td>
+              {% if trx.transaction_type == 'DEPOSIT' %}
+                <span class="badge badge-success">Deposit</span>
+              {% else %}
+                <span class="badge badge-danger">Withdrawal</span>
+              {% endif %}
+            </td>
+            <td><strong>{{ trx.amount|clean_amount }} BDT</strong></td>
+            <td>{{ trx.get_payment_method_display }}</td>
+            <td>{{ trx.reference_note|default:'-' }}</td>
+            <td><span class="badge {{ trx.get_status_badge }}">{{ trx.get_status_display }}</span></td>
+            <td>{{ trx.processed_by.username|default:trx.created_by.username|default:'-' }}</td>
+            <td>
+              {% if trx.status == 'PENDING' %}
+                <div style="display: flex; gap: 0.35rem;">
+                  <a href="{% url 'savings:approve_transaction' trx.id %}" class="btn btn-sm btn-success" onclick="return confirm('Approve this transaction?')">
+                    Approve
+                  </a>
+                  <a href="{% url 'savings:reject_transaction' trx.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Reject this transaction?')">
+                    Reject
+                  </a>
+                </div>
+              {% else %}
+                <span style="font-size: 0.75rem; color: #94a3b8;">Completed</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="9" style="text-align: center; padding: 2.5rem; color: #94a3b8;">
+              No transactions matching your criteria.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'includes/pagination.html' %}
+</div>
+
+<!-- Modal: Record Deposit -->
+<div class="modal-backdrop" id="recordDepositModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Record Member Savings Deposit</h3>
+      <button class="btn-sm btn-secondary" onclick="closeModal('recordDepositModal')">&times;</button>
+    </div>
+    <form method="post" action="{% url 'savings:record_deposit' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-group" style="position: relative;">
+          <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Select Member *</span>
+            <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">Search by ID, Name or Phone</span>
+          </label>
+
+          <!-- Member Search Input Box -->
+          <div class="member-search-box-wrapper" style="position: relative; margin-bottom: 0.5rem;">
+            <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; display: flex; align-items: center;">
+              <svg style="width: 15px; height: 15px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </span>
+            <input type="text" class="form-control member-search-input" 
+                   data-target-select="#id_member"
+                   placeholder="Type keywords to search member..." 
+                   autocomplete="off" 
+                   style="padding-left: 32px; padding-right: 32px;">
+            <button type="button" class="member-search-clear" 
+                    title="Clear search"
+                    style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.15rem; color: #94a3b8; cursor: pointer; padding: 2px 6px;">
+              &times;
+            </button>
+            <div class="member-suggestions-dropdown" 
+                 style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 1060; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);">
+            </div>
+          </div>
+
+          {{ deposit_form.member }}
+
+          <div class="selected-member-indicator" style="display: none; margin-top: 6px; font-size: 0.8rem; color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 4px 8px;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Deposit Amount (BDT) *</label>
+          {{ deposit_form.amount }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Payment Method *</label>
+          {{ deposit_form.payment_method }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Receipt / Slip Reference</label>
+          {{ deposit_form.reference_note }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('recordDepositModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Record Deposit</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal: Record Withdrawal -->
+<div class="modal-backdrop" id="recordWithdrawalModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Record Member Savings Withdrawal</h3>
+      <button class="btn-sm btn-secondary" onclick="closeModal('recordWithdrawalModal')">&times;</button>
+    </div>
+    <form method="post" action="{% url 'savings:record_withdrawal' %}">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-group" style="position: relative;">
+          <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>Select Member *</span>
+            <span style="font-size: 0.75rem; color: #64748b; font-weight: normal;">Search by ID, Name or Phone</span>
+          </label>
+
+          <!-- Member Search Input Box -->
+          <div class="member-search-box-wrapper" style="position: relative; margin-bottom: 0.5rem;">
+            <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; display: flex; align-items: center;">
+              <svg style="width: 15px; height: 15px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </span>
+            <input type="text" class="form-control member-search-input" 
+                   data-target-select="#id_withdrawal_member"
+                   placeholder="Type keywords to search member..." 
+                   autocomplete="off" 
+                   style="padding-left: 32px; padding-right: 32px;">
+            <button type="button" class="member-search-clear" 
+                    title="Clear search"
+                    style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.15rem; color: #94a3b8; cursor: pointer; padding: 2px 6px;">
+              &times;
+            </button>
+            <div class="member-suggestions-dropdown" 
+                 style="display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 1060; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);">
+            </div>
+          </div>
+
+          {{ withdrawal_form.member }}
+
+          <div class="selected-member-indicator" style="display: none; margin-top: 6px; font-size: 0.8rem; color: #15803d; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 4px; padding: 4px 8px;">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Withdrawal Amount (BDT) *</label>
+          {{ withdrawal_form.amount }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Voucher / Slip Reference</label>
+          {{ withdrawal_form.reference_note }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('recordWithdrawalModal')">Cancel</button>
+        <button type="submit" class="btn btn-danger">Disburse Withdrawal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script id="active-members-data" type="application/json">
+  [
+    {% for m in active_members %}
+      {
+        "id": {{ m.id }},
+        "member_id": "{{ m.member_id|escapejs }}",
+        "name": "{{ m.user.get_full_name|default:m.user.username|escapejs }}",
+        "phone": "{{ m.user.phone|default:''|escapejs }}",
+        "email": "{{ m.user.email|default:''|escapejs }}"
+      }{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ]
+</script>
+{% endblock %}

@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Member Dashboard{% endblock %}
+{% block page_title %}Welcome, {{ user.first_name|default:user.username }}!{% endblock %}
+{% block page_subtitle %}Membership ID: {{ profile.member_id }} &bull; Touch &amp; Solve Micro Finance{% endblock %}
+
+{% block content %}
+<!-- Top Metrics -->
+<div class="stats-grid">
+  <!-- Savings Balance -->
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-green">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Total Savings Balance</div>
+      <div class="stat-value" style="color: var(--accent);">{{ account.balance|clean_amount }} <span
+          style="font-size: 0.9rem;">BDT</span></div>
+      <div class="stat-subtitle">A/C: {{ account.account_number }}</div>
+    </div>
+  </div>
+
+  <!-- Outstanding Loan
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-blue">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Outstanding Loan Balance</div>
+      <div class="stat-value">{{ total_loan_outstanding|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+      <div class="stat-subtitle">{{ active_loans.count }} Active Loan(s)</div>
+    </div>
+  </div> -->
+
+  <!-- Next Upcoming Installment -->
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-amber">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Next Installment Due</div>
+      {% if next_installment %}
+      <div class="stat-value" style="font-size: 1.2rem;">{{ next_installment.total_amount|clean_amount }} BDT</div>
+      <div class="stat-subtitle" style="color: var(--warning); font-weight: 600;">Due on {{
+        next_installment.due_date|date:"M d, Y" }}</div>
+      {% else %}
+      <div class="stat-value" style="font-size: 1.2rem; color: #64748b;">No Dues</div>
+      <div class="stat-subtitle">All caught up!</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Quick Action Shortcuts -->
+<div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+  <a href="{% url 'savings:my_savings' %}" class="btn btn-primary">
+    💰 My Savings
+  </a>
+  <a href="{% url 'loans:my_loans' %}" class="btn btn-secondary">
+    💳 My Loans
+  </a>
+  <a href="{% url 'accounts:profile' %}" class="btn btn-outline-primary">
+    👤 My Profile
+  </a>
+</div>
+
+<!-- Two Column Row -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 1.5rem;">
+  <!-- Active Loans Overview -->
+  <div class="content-card">
+    <div class="card-header">
+      <div class="card-title">My Active Loans</div>
+      <a href="{% url 'loans:my_loans' %}"
+        style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">View All &rarr;</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Loan ID</th>
+            <th>Principal</th>
+            <th>Progress</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for loan in recent_loans %}
+          <tr>
+            <td>
+              <a href="{% url 'loans:loan_detail' loan.id %}"
+                style="font-weight: 700; color: var(--primary); text-decoration: none;">
+                {{ loan.loan_id }}
+              </a>
+            </td>
+            <td>{{ loan.principal_amount|clean_amount }} BDT</td>
+            <td style="min-width: 100px;">
+              <div
+                style="background: #e2e8f0; border-radius: 9999px; height: 6px; width: 100%; overflow: hidden; margin-bottom: 2px;">
+                <div style="background: var(--accent); height: 100%; width: {{ loan.progress_percentage }}%;"></div>
+              </div>
+              <div style="font-size: 0.65rem; color: #64748b;">{{ loan.progress_percentage }}% Paid</div>
+            </td>
+            <td><span class="badge {{ loan.get_status_badge }}">{{ loan.get_status_display }}</span></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" style="text-align: center; padding: 1.5rem; color: #94a3b8;">
+              No loans currently active.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Savings Transactions -->
+  <div class="content-card">
+    <div class="card-header">
+      <div class="card-title">Recent Savings Activity</div>
+      <a href="{% url 'savings:my_savings' %}"
+        style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">Full Statement
+        &rarr;</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for trx in recent_transactions %}
+          <tr>
+            <td>{{ trx.created_at|date:"M d" }}</td>
+            <td>
+              {% if trx.transaction_type == 'DEPOSIT' %}
+              <strong style="color: var(--accent);">&darr; Deposit</strong>
+              {% else %}
+              <strong style="color: var(--danger);">&uarr; Withdraw</strong>
+              {% endif %}
+            </td>
+            <td><strong>{{ trx.amount|clean_amount }} BDT</strong></td>
+            <td><span class="badge {{ trx.get_status_badge }}">{{ trx.get_status_display }}</span></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" style="text-align: center; padding: 1.5rem; color: #94a3b8;">
+              No recent transactions.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

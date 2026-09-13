@@ -1,31 +1,56 @@
 """
-Django settings for tns_microfinance project.
-Touch and Solve Micro Finance Co-operative System.
+==============================================================================
+Touch and Solve Microfinance Co-operative System
+Settings Configuration (Beginner-Friendly Learning Project)
+==============================================================================
+This file contains all the settings and configurations for the Django project.
+It follows standard Django best practices with beginner-friendly explanations.
 """
 
 from pathlib import Path
 import os
 import sys
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# -----------------------------------------------------------------------------
+# 1. BASE DIRECTORY
+# Points to the root folder of our project (where manage.py is located).
+# -----------------------------------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Add apps folder to sys.path so we can import directly or via apps.<app_name>
+# Add the 'apps' folder to Python path so we can import our apps cleanly
 sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
 
+# -----------------------------------------------------------------------------
+# 2. SECURITY & ENVIRONMENT
+# -----------------------------------------------------------------------------
+# SECRET_KEY is used for cryptographic signing in Django sessions and cookies.
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-tns-microfinance-cooperative-secret-key-prod-dev-2026')
 
+# DEBUG: Set to True during development so Django shows helpful error tracebacks.
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
+# ALLOWED_HOSTS: List of domain names/IPs this Django site can serve.
 ALLOWED_HOSTS = ['*']
+
 CSRF_TRUSTED_ORIGINS = [
     'https://*.vercel.app',
     'http://127.0.0.1',
     'http://localhost',
 ]
 
-# Application definition
+# -----------------------------------------------------------------------------
+# SSLCOMMERZ HOSTED PAYMENT GATEWAY (Sandbox & Live)
+# -----------------------------------------------------------------------------
+SSLCOMMERZ_STORE_ID = os.environ.get('SSLCOMMERZ_STORE_ID', 'tnsco6a9fad1c04883')
+SSLCOMMERZ_STORE_PASS = os.environ.get('SSLCOMMERZ_STORE_PASS', 'tnsco6a9fad1c04883@ssl')
+SSLCOMMERZ_IS_SANDBOX = os.environ.get('SSLCOMMERZ_IS_SANDBOX', 'True') == 'True'
+
+# -----------------------------------------------------------------------------
+# 3. INSTALLED APPS
+# Here we register standard Django built-in apps and our custom project apps.
+# -----------------------------------------------------------------------------
 INSTALLED_APPS = [
+    # Built-in Django Applications
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -34,18 +59,21 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
-    # Custom Touch and Solve Microfinance Apps
-    'apps.accounts',
-    'apps.members',
-    'apps.savings',
-    'apps.loans',
-    'apps.notifications',
-    'apps.core',
+    # Our Custom Microfinance Apps (under apps/ folder)
+    'apps.accounts',      # Authentication, user roles, profile
+    'apps.members',       # Member KYC records and officer assignment
+    'apps.savings',       # Savings accounts, deposit/withdrawal requests
+    'apps.loans',         # Loan products, applications, amortization schedules
+    'apps.core',          # Dashboards (Admin/Officer/Member), reports, printing
+    'apps.notifications', # In-app alerts, payment confirmations, and system notifications
 ]
 
+# -----------------------------------------------------------------------------
+# 4. MIDDLEWARE
+# Functions that process every request/response before reaching views.
+# -----------------------------------------------------------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -54,28 +82,19 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# Static files storage using WhiteNoise
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-WHITENOISE_MANIFEST_STRICT = False
-
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
-    },
-}
-
+# -----------------------------------------------------------------------------
+# 5. URLS & TEMPLATES CONFIGURATION
+# -----------------------------------------------------------------------------
 ROOT_URLCONF = 'tns_microfinance.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'], # Where Django looks for custom HTML files
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                # Makes request, user, and messages automatically available in all templates
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
@@ -91,7 +110,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'tns_microfinance.wsgi.application'
 
-# Database Configuration (Supports PostgreSQL / Neon / Supabase via DATABASE_URL or SQLite)
+# -----------------------------------------------------------------------------
+# 6. DATABASE CONFIGURATION
+# We use SQLite for easy, lightweight setup with zero extra configuration.
+# -----------------------------------------------------------------------------
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -99,6 +121,7 @@ DATABASES = {
     }
 }
 
+# Optional PostgreSQL support if DATABASE_URL environment variable is present
 DATABASE_URL = os.environ.get('DATABASE_URL')
 if DATABASE_URL:
     try:
@@ -112,10 +135,13 @@ if DATABASE_URL:
     except ImportError:
         pass
 
-# Custom User Model
+# -----------------------------------------------------------------------------
+# 7. AUTHENTICATION & CUSTOM USER MODEL
+# -----------------------------------------------------------------------------
+# Tell Django to use our CustomUser model with role support (Admin, Officer, Member)
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
-# Password validation
+# Password validation rules
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
@@ -125,30 +151,30 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
+# -----------------------------------------------------------------------------
+# 8. INTERNATIONALIZATION & TIMEZONE
+# -----------------------------------------------------------------------------
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Dhaka'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
+# -----------------------------------------------------------------------------
+# 9. STATIC & MEDIA FILES (CSS, JS, User Uploads)
+# -----------------------------------------------------------------------------
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files
+# Directory where uploaded member photos and KYC documents are saved
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Authentication URLs
+# -----------------------------------------------------------------------------
+# 10. AUTHENTICATION REDIRECT URLS
+# -----------------------------------------------------------------------------
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'core:dashboard'
 LOGOUT_REDIRECT_URL = 'accounts:login'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# SSLCOMMERZ Payment Gateway Configuration (Sandbox Mode)
-SSLCOMMERZ_STORE_ID = os.environ.get('SSLCOMMERZ_STORE_ID', 'testbox')
-SSLCOMMERZ_STORE_PASS = os.environ.get('SSLCOMMERZ_STORE_PASS', 'qwerty')
-SSLCOMMERZ_IS_SANDBOX = True
-

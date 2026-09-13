@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Manage Officers{% endblock %}
+{% block page_title %}Field &amp; Loan Officers{% endblock %}
+{% block page_subtitle %}Manage staff credentials and access permissions{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+  <div>
+    <h3 style="font-size: 1.1rem; font-weight: 700;">All Registered Officers ({{ officers.count }})</h3>
+  </div>
+  <button class="btn btn-primary" onclick="openModal('addOfficerModal')">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    Add New Officer
+  </button>
+</div>
+
+<div class="content-card">
+  <div class="table-responsive">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Officer Name</th>
+          <th>Username</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Status</th>
+          <th>Joined Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for officer in officers %}
+          <tr>
+            <td>
+              <strong style="font-size: 0.9rem;">{{ officer.get_full_name|default:officer.username }}</strong>
+            </td>
+            <td><code>{{ officer.username }}</code></td>
+            <td>{{ officer.email|default:'-' }}</td>
+            <td>{{ officer.phone|default:'-' }}</td>
+            <td>
+              {% if officer.is_active %}
+                <span class="badge badge-success">Active</span>
+              {% else %}
+                <span class="badge badge-danger">Deactivated</span>
+              {% endif %}
+            </td>
+            <td>{{ officer.date_joined|date:"M d, Y" }}</td>
+            <td>
+              <a href="{% url 'accounts:officer_toggle_status' officer.id %}" class="btn btn-sm {% if officer.is_active %}btn-danger{% else %}btn-success{% endif %}">
+                {% if officer.is_active %}Deactivate{% else %}Activate{% endif %}
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="7" style="text-align: center; padding: 2rem; color: #94a3b8;">
+              No officers created yet. Click "Add New Officer" to create one.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'includes/pagination.html' %}
+</div>
+
+<!-- Modal: Add New Officer -->
+<div class="modal-backdrop" id="addOfficerModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Add New Officer Account</h3>
+      <button class="btn-sm btn-secondary" onclick="closeModal('addOfficerModal')">&times;</button>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            {{ form.first_name }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            {{ form.last_name }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Username *</label>
+          {{ form.username }}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            {{ form.email }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            {{ form.phone }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          {{ form.address }}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Password *</label>
+            {{ form.password }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Confirm Password *</label>
+            {{ form.confirm_password }}
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addOfficerModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Officer</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

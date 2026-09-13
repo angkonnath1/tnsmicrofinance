@@ -1,0 +1,282 @@
+{% extends 'base.html' %}
+{% load static humanize %}
+
+{% block title %}Officer Field Dashboard{% endblock %}
+{% block page_title %}Field Officer Portal{% endblock %}
+{% block page_subtitle %}Manage field collections, verify member requests, and process loans{% endblock %}
+
+{% block content %}
+<!-- Top Metrics -->
+<div class="stats-grid">
+  <!-- Today's Total Collection -->
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-green">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Today's Collections</div>
+      <div class="stat-value" style="color: var(--accent);">{{ today_total_collection|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
+      <div class="stat-subtitle">Savings: {{ today_deposit_collected|clean_amount }} | Loans: {{ today_installment_collected|clean_amount }}</div>
+    </div>
+  </div>
+
+  <!-- Active Members -->
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-blue">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Active Members</div>
+      <div class="stat-value">{{ active_members }}</div>
+      <div class="stat-subtitle">Total Enrolled: {{ total_members }}</div>
+    </div>
+  </div>
+
+  <!-- Pending Approvals -->
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-amber">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Pending Requests</div>
+      <div class="stat-value">{{ pending_savings_count|add:pending_loans_count }}</div>
+      <div class="stat-subtitle">Savings: {{ pending_savings_count }} | Loans: {{ pending_loans_count }}</div>
+    </div>
+  </div>
+
+  <!-- Active Loans -->
+  <div class="stat-card">
+    <div class="stat-icon-wrap stat-icon-navy">
+      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </div>
+    <div class="stat-details">
+      <div class="stat-label">Disbursed Loans</div>
+      <div class="stat-value">{{ active_loans_count }}</div>
+      <div class="stat-subtitle">Active Portfolio</div>
+    </div>
+  </div>
+</div>
+
+<!-- Action Bar -->
+<div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+  <a href="{% url 'members:member_create' %}" class="btn btn-primary">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+    </svg>
+    Enroll Member
+  </a>
+  <a href="{% url 'savings:staff_transactions' %}" class="btn btn-secondary">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+    </svg>
+    Savings &amp; Deposit Queue
+  </a>
+  <a href="{% url 'loans:staff_loan_list' %}" class="btn btn-secondary">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    </svg>
+    Manage Loans
+  </a>
+  <a href="{% url 'core:collection_sheet' %}" class="btn btn-outline-primary">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+    </svg>
+    Open Daily Collection Sheet
+  </a>
+</div>
+
+<!-- Pending Member Registrations (KYC Review) Card -->
+{% if pending_members_count > 0 %}
+  <div class="content-card" style="border: 2px solid #fde68a; margin-bottom: 2rem;">
+    <div class="card-header" style="background: #fffbeb;">
+      <div class="card-title" style="color: #92400e; display: flex; align-items: center; gap: 0.5rem;">
+        <span>⏳</span> Pending Member Registrations (KYC Review)
+      </div>
+      <a href="{% url 'members:member_list' %}?status=PENDING" class="badge badge-warning" style="text-decoration: none;">
+        {{ pending_members_count }} Pending Review &rarr;
+      </a>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Member ID</th>
+            <th>Applicant Name</th>
+            <th>Phone</th>
+            <th>NID Number</th>
+            <th>Applied Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for pm in pending_members %}
+            <tr>
+              <td><strong style="color: var(--primary);">{{ pm.member_id }}</strong></td>
+              <td>
+                <div style="font-weight: 700;">{{ pm.user.get_full_name }}</div>
+                <div style="font-size: 0.75rem; color: #64748b;">@{{ pm.user.username }}</div>
+              </td>
+              <td>{{ pm.user.phone|default:'-' }}</td>
+              <td>{{ pm.nid_number|default:'-' }}</td>
+              <td>{{ pm.created_at|date:"M d, Y" }}</td>
+              <td>
+                <div style="display: flex; gap: 0.35rem;">
+                  <a href="{% url 'members:member_detail' pm.id %}" class="btn btn-sm btn-outline-primary">Review KYC</a>
+                  <a href="{% url 'members:member_approve' pm.id %}" class="btn btn-sm btn-success" onclick="return confirm('Approve this member application?');">Approve</a>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Main 2-Column Content -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.5rem;">
+  <!-- Left: Pending Loan Applications & Today's Dues -->
+  <div>
+    <!-- Pending Loans -->
+    <div class="content-card">
+      <div class="card-header">
+        <div class="card-title">Pending Loan Applications</div>
+        <a href="{% url 'loans:staff_loan_list' %}?status=PENDING" style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">View All &rarr;</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Amount</th>
+              <th>Purpose</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for loan in pending_loans %}
+              <tr>
+                <td>
+                  <a href="{% url 'loans:loan_detail' loan.id %}" style="font-weight: 700; color: var(--primary); text-decoration: none;">
+                    {{ loan.member.member_id }}
+                  </a>
+                  <div style="font-size: 0.75rem; color: #64748b;">{{ loan.member.user.get_full_name }}</div>
+                </td>
+                <td><strong>{{ loan.principal_amount|clean_amount }} BDT</strong></td>
+                <td>{{ loan.purpose|truncatechars:20 }}</td>
+                <td>
+                  <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-sm btn-outline-primary">Review</a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" style="text-align: center; padding: 1.5rem; color: #94a3b8;">
+                  No pending loan applications.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Overdue Installments -->
+    {% if overdue_installments %}
+      <div class="content-card" style="border-left: 4px solid var(--danger);">
+        <div class="card-header">
+          <div class="card-title" style="color: var(--danger);">⚠️ Overdue Installments</div>
+        </div>
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Member</th>
+                <th>Due Date</th>
+                <th>Amount</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inst in overdue_installments %}
+                <tr>
+                  <td>
+                    <strong>{{ inst.loan.member.member_id }}</strong>
+                    <div style="font-size: 0.75rem; color: #64748b;">{{ inst.loan.member.user.get_full_name }}</div>
+                  </td>
+                  <td style="color: var(--danger); font-weight: 700;">{{ inst.due_date|date:"M d" }}</td>
+                  <td><strong>{{ inst.total_amount|clean_amount }} BDT</strong></td>
+                  <td>
+                    <a href="{% url 'loans:collect_installment' inst.id %}" class="btn btn-sm btn-primary" onclick="return confirm('Collect overdue payment of {{ inst.total_amount }} BDT?')">
+                      Collect
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Right: Pending Savings Requests -->
+  <div>
+    <div class="content-card">
+      <div class="card-header">
+        <div class="card-title">Pending Savings / Withdrawal Requests</div>
+        <a href="{% url 'savings:staff_transactions' %}?status=PENDING" style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">View All &rarr;</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Member</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for trx in pending_deposits %}
+              <tr>
+                <td>
+                  <strong>{{ trx.account.member.member_id }}</strong>
+                  <div style="font-size: 0.75rem; color: #64748b;">{{ trx.account.member.user.get_full_name }}</div>
+                </td>
+                <td>
+                  {% if trx.transaction_type == 'DEPOSIT' %}
+                    <span class="badge badge-success">Deposit</span>
+                  {% else %}
+                    <span class="badge badge-danger">Withdrawal</span>
+                  {% endif %}
+                </td>
+                <td><strong>{{ trx.amount|clean_amount }} BDT</strong></td>
+                <td>
+                  <div style="display: flex; gap: 0.35rem;">
+                    <a href="{% url 'savings:approve_transaction' trx.id %}" class="btn btn-sm btn-success">Approve</a>
+                    <a href="{% url 'savings:reject_transaction' trx.id %}" class="btn btn-sm btn-danger">Reject</a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" style="text-align: center; padding: 1.5rem; color: #94a3b8;">
+                  No pending savings requests.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

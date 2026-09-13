@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Application Submitted - Touch and Solve</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body style="background: #000000; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem;">
+  <div style="max-width: 620px; width: 100%; background: white; border-radius: var(--radius-lg); padding: 3rem 2.25rem; box-shadow: var(--shadow-xl); text-align: center;">
+    
+    <!-- Success / Welcome Icon -->
+    <div style="width: 76px; height: 76px; border-radius: var(--radius-full); background: #f4f4f5; border: 3px solid #000000; color: #000000; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 2.25rem;">
+      <span>✓</span>
+    </div>
+
+    <!-- Welcoming Greet Message -->
+    <h2 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem;">
+      Application Received!
+    </h2>
+    <p style="font-size: 1.05rem; color: var(--primary); font-weight: 700; margin-bottom: 1rem;">
+      Welcome to Touch &amp; Solve Co-operative, {{ info.name }}!
+    </p>
+    <p style="font-size: 0.9rem; color: #64748b; line-height: 1.6; margin-bottom: 2rem;">
+      Thank you for registering. Your membership application and KYC documents have been submitted and sent to our Field Officers for verification and approval.
+    </p>
+
+    <!-- Application Summary Card -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-md); padding: 1.25rem; text-align: left; margin-bottom: 2rem;">
+      <div style="font-size: 0.75rem; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 0.75rem;">
+        Application Reference Details
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.85rem;">
+        <div>
+          <span style="color: #64748b;">Member ID:</span>
+          <div style="font-weight: 700; color: var(--primary);">{{ info.member_id }}</div>
+        </div>
+        <div>
+          <span style="color: #64748b;">Username:</span>
+          <div style="font-weight: 600;">{{ info.username }}</div>
+        </div>
+        <div>
+          <span style="color: #64748b;">Contact:</span>
+          <div style="font-weight: 600;">{{ info.phone|default:'Provided' }}</div>
+        </div>
+        <div>
+          <span style="color: #64748b;">Current Status:</span>
+          <div><span class="badge badge-warning">Pending Officer Approval</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Next Steps Timeline -->
+    <div style="background: #f0fdf4; border-left: 4px solid #10b981; border-radius: var(--radius-sm); padding: 1rem 1.25rem; text-align: left; margin-bottom: 2.25rem; font-size: 0.85rem; color: #166534; line-height: 1.5;">
+      <strong>What happens next?</strong>
+      <div style="margin-top: 4px;">
+        1. Our Field Officer will review your KYC information and uploaded documents.<br>
+        2. Once approved, your savings account will be ready and you will be able to log in with your credentials.
+      </div>
+    </div>
+
+    <a href="{% url 'accounts:login' %}" class="btn btn-primary" style="display: inline-block; width: 100%; padding: 0.85rem; font-size: 0.95rem; text-decoration: none;">
+      &larr; Return to Sign In Portal
+    </a>
+  </div>
+
+  {% include 'includes/agentation.html' %}
+</body>
+</html>

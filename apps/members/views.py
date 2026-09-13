@@ -1,24 +1,42 @@
+"""
+==============================================================================
+Touch and Solve Microfinance - Members App Views
+Author: Beginner Learner Developer / Learning Project
+Description: Views for searching, registering, viewing, approving,
+             and rejecting co-operative member profiles.
+==============================================================================
+"""
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from django.db import transaction
+from django.utils import timezone
+from django.core.paginator import Paginator
 
+# Import accounts and member models/forms
 from apps.accounts.models import CustomUser
 from apps.accounts.decorators import officer_required
-from apps.notifications.utils import notify_user, notify_staff_and_admins
+from apps.savings.models import SavingsAccount
 from .models import MemberProfile
 from .forms import MemberRegistrationForm, MemberProfileEditForm
 
-from django.core.paginator import Paginator
 
+# ==============================================================================
+# 1. MEMBER LIST VIEW (Search & Filter)
+# Officers can search members by Name, ID, Phone, or NID number.
+# ==============================================================================
 @officer_required
 def member_list_view(request):
+    # Step 1: Read search query and status filter from GET parameters
     query = request.GET.get('q', '').strip()
     status_filter = request.GET.get('status', '')
 
+    # Step 2: Fetch all members from database ordered by registration date
     members = MemberProfile.objects.select_related('user', 'assigned_officer').order_by('-joined_date')
 
+    # Step 3: Apply text search filter if query is provided
     if query:
         terms = query.split()
         q_obj = Q()
@@ -33,27 +51,36 @@ def member_list_view(request):
             )
         members = members.filter(q_obj)
 
+    # Step 4: Apply status filter (ACTIVE, PENDING, REJECTED, etc.)
     if status_filter:
         members = members.filter(status=status_filter)
 
-    paginator = Paginator(members, 10) # 10 members per page
+    # Step 5: Paginate 10 members per page
+    paginator = Paginator(members, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'members/member_list.html', {
+    # Step 6: Render member list template
+    context = {
         'page_obj': page_obj,
         'members': page_obj,
         'query': query,
         'status_filter': status_filter,
-    })
+    }
+    return render(request, 'members/member_list.html', context)
 
+
+# ==============================================================================
+# 2. CREATE NEW MEMBER VIEW (Officer Enrolling a Member)
+# Creates CustomUser, MemberProfile, and opening SavingsAccount in one transaction.
+# ==============================================================================
 @officer_required
 def member_create_view(request):
     if request.method == 'POST':
         form = MemberRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             with transaction.atomic():
-                # Create CustomUser
+                # Step 1: Create user record
                 user = CustomUser.objects.create_user(
                     username=form.cleaned_data['username'],
                     first_name=form.cleaned_data['first_name'],
@@ -64,39 +91,22 @@ def member_create_view(request):
                     password=form.cleaned_data['password']
                 )
 
+                # Step 2: Attach profile picture if uploaded
                 if 'member_photo' in request.FILES:
                     user.profile_picture = request.FILES['member_photo']
                     user.save(update_fields=['profile_picture'])
 
-                # Create MemberProfile
+                # Step 3: Create MemberProfile record
                 profile = form.save(commit=False)
                 profile.user = user
                 if not profile.assigned_officer and request.user.role == 'OFFICER':
                     profile.assigned_officer = request.user
                 profile.save()
 
-                # Automatically create default Savings Account
-                from apps.savings.models import SavingsAccount
+                # Step 4: Automatically provision default Savings Account
                 SavingsAccount.objects.create(
                     member=profile,
                     account_number=f"SAV-{profile.member_id.replace('TNS-MEM-', '')}"
-                )
-
-                # Send welcome notification to member
-                notify_user(
-                    user=user,
-                    title="Welcome to Touch and Solve Co-operative!",
-                    message=f"Your membership ID is {profile.member_id}. Your savings account has been opened.",
-                    link="/savings/my-account/",
-                    notification_type='SUCCESS'
-                )
-
-                # Notify admins and officers
-                notify_staff_and_admins(
-                    title="New Member Registered",
-                    message=f"{profile.member_id} - {user.get_full_name()} has been enrolled by {request.user.username}.",
-                    link=f"/members/{profile.id}/",
-                    notification_type='INFO'
                 )
 
             messages.success(request, f"Member '{profile.member_id} - {user.get_full_name()}' registered successfully!")
@@ -108,33 +118,42 @@ def member_create_view(request):
 
     return render(request, 'members/member_create.html', {'form': form})
 
+
+# ==============================================================================
+# 3. MEMBER DETAIL VIEW
+# Displays member profile card, KYC photo/NID, savings balance, and loan history.
+# ==============================================================================
 @login_required
 def member_detail_view(request, pk):
     profile = get_object_or_404(MemberProfile.objects.select_related('user', 'assigned_officer'), pk=pk)
 
-    # Permission check: Members can only view their own profile; Staff/Admins can view any
+    # Permission check: A member can only view their own profile; Officers/Admins can view any
     if request.user.is_member_user and hasattr(request.user, 'member_profile') and request.user.member_profile.pk != profile.pk:
         messages.error(request, "Access restricted.")
         return redirect('core:dashboard')
 
-    # Get savings account & transactions
+    # Fetch savings account and recent 10 transactions
     savings_account = getattr(profile, 'savings_account', None)
     savings_transactions = []
     if savings_account:
         savings_transactions = savings_account.transactions.select_related('processed_by').order_by('-created_at')[:10]
 
-    # Get loans
+    # Fetch all loans for this member
     loans = profile.loans.order_by('-applied_at')
 
-    return render(request, 'members/member_detail.html', {
+    context = {
         'profile': profile,
         'savings_account': savings_account,
         'savings_transactions': savings_transactions,
         'loans': loans,
-    })
+    }
+    return render(request, 'members/member_detail.html', context)
 
-from django.utils import timezone
 
+# ==============================================================================
+# 4. EDIT MEMBER PROFILE VIEW
+# Allows Field Officers to update member personal details and nominee info.
+# ==============================================================================
 @officer_required
 def member_edit_view(request, pk):
     profile = get_object_or_404(MemberProfile, pk=pk)
@@ -143,7 +162,7 @@ def member_edit_view(request, pk):
     if request.method == 'POST':
         form = MemberProfileEditForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
-            # Update user fields
+            # Update user model fields
             user.first_name = form.cleaned_data['first_name']
             user.last_name = form.cleaned_data['last_name']
             user.email = form.cleaned_data.get('email', '')
@@ -169,6 +188,11 @@ def member_edit_view(request, pk):
         'profile': profile
     })
 
+
+# ==============================================================================
+# 5. APPROVE MEMBER APPLICATION VIEW
+# Officer approves a pending member application and activates their account login.
+# ==============================================================================
 @officer_required
 def member_approve_view(request, pk):
     profile = get_object_or_404(MemberProfile, pk=pk)
@@ -180,22 +204,18 @@ def member_approve_view(request, pk):
         profile.rejection_reason = None
         profile.save()
 
-        # Activate user login
+        # Activate the user's login credentials
         profile.user.is_active = True
         profile.user.save(update_fields=['is_active'])
-
-        # Notify Member
-        notify_user(
-            user=profile.user,
-            title="Account Approved!",
-            message=f"Your membership ({profile.member_id}) has been approved by officer {request.user.username}. You can now log in and manage your savings & loans.",
-            link="/savings/my-account/",
-            notification_type='SUCCESS'
-        )
 
     messages.success(request, f"Member {profile.member_id} ({profile.user.get_full_name()}) has been APPROVED and activated.")
     return redirect('members:member_detail', pk=profile.pk)
 
+
+# ==============================================================================
+# 6. REJECT MEMBER APPLICATION VIEW
+# Officer rejects an application with a specified reason.
+# ==============================================================================
 @officer_required
 def member_reject_view(request, pk):
     profile = get_object_or_404(MemberProfile, pk=pk)
@@ -212,13 +232,6 @@ def member_reject_view(request, pk):
         profile.user.is_active = False
         profile.user.save(update_fields=['is_active'])
 
-        notify_user(
-            user=profile.user,
-            title="Membership Application Rejected",
-            message=f"Your application was rejected. Reason: {reason}",
-            link=None,
-            notification_type='DANGER'
-        )
 
     messages.warning(request, f"Member application {profile.member_id} has been marked as REJECTED.")
     return redirect('members:member_detail', pk=profile.pk)

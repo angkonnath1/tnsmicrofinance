@@ -12,8 +12,8 @@ class SSLCommerzGateway:
     Interacts directly with official SSLCOMMERZ Session & Validation Server APIs.
     """
     def __init__(self):
-        self.store_id = getattr(settings, 'SSLCOMMERZ_STORE_ID', 'testbox')
-        self.store_pass = getattr(settings, 'SSLCOMMERZ_STORE_PASS', 'qwerty')
+        self.store_id = getattr(settings, 'SSLCOMMERZ_STORE_ID', 'tnsco6a9fad1c04883')
+        self.store_pass = getattr(settings, 'SSLCOMMERZ_STORE_PASS', 'tnsco6a9fad1c04883@ssl')
         self.is_sandbox = getattr(settings, 'SSLCOMMERZ_IS_SANDBOX', True)
 
         if self.is_sandbox:
@@ -25,7 +25,7 @@ class SSLCommerzGateway:
 
     def initiate_payment(self, tran_id, amount, customer, success_url, fail_url, cancel_url, ipn_url=None, product_name="Co-op Financial Service"):
         """
-        Calls official SSLCOMMERZ Session API to create a live gateway session and get the real GatewayPageURL.
+        Calls official SSLCOMMERZ Session API to create a gateway session and get the GatewayPageURL.
         """
         phone = getattr(customer, 'phone', '') or '01711223344'
         email = getattr(customer, 'email', '') or 'member@touchandsolve.org'

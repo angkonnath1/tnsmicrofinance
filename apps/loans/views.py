@@ -1,3 +1,13 @@
+"""
+==============================================================================
+Touch and Solve Microfinance - Loans App Views
+Author: Beginner Learner Developer / Learning Project
+Description: Views for managing loan applications, officer review & approval,
+             disbursement, monthly installment repayments (savings, cash, MFS),
+             managing loan schemes, and generating printable loan statements.
+==============================================================================
+"""
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.http import HttpResponse
@@ -5,13 +15,18 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Q, Sum
+from django.db import transaction
+from django.core.paginator import Paginator
+from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
+import uuid
 
-from apps.core.pdf_service import generate_loan_statement_pdf
+# Import services, models, and decorators
 from apps.accounts.decorators import officer_required, member_required, admin_required
-from apps.notifications.utils import notify_user, notify_staff_and_admins
 from apps.members.models import MemberProfile
+from apps.savings.models import SavingsAccount, SavingsTransaction
 from apps.core.sslcommerz import sslcommerz_client
+from apps.notifications.utils import notify_user, notify_staff_and_admins
 from .models import LoanApplication, LoanInstallment, LoanScheme, SSLLoanPaymentSession
 from .forms import (
     MemberLoanApplicationForm,
@@ -19,21 +34,24 @@ from .forms import (
     LoanSchemeForm,
 )
 
-from django.core.paginator import Paginator
 
-# ----------------- MEMBER LOAN VIEWS ----------------- #
-
+# ==============================================================================
+# 1. MEMBER LOANS OVERVIEW
+# Displays member's active loans, pending applications, and repayment totals.
+# ==============================================================================
 @member_required
 def my_loans_view(request):
     profile = getattr(request.user, 'member_profile', None)
     if not profile:
         return redirect('core:dashboard')
 
+    # Query all loans for this member
     loans = profile.loans.select_related('loan_product').order_by('-applied_at')
     active_loans = loans.filter(status='DISBURSED')
     pending_loans = loans.filter(status='PENDING')
     completed_loans = loans.filter(status='COMPLETED')
 
+    # Sum total principal borrowed and total repayments made
     total_borrowed = loans.filter(status__in=['DISBURSED', 'COMPLETED']).aggregate(Sum('principal_amount'))['principal_amount__sum'] or 0
     total_repaid = loans.aggregate(Sum('total_paid'))['total_paid__sum'] or 0
 
@@ -41,7 +59,7 @@ def my_loans_view(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, 'loans/my_loans.html', {
+    context = {
         'page_obj': page_obj,
         'loans': page_obj,
         'active_loans': active_loans,
@@ -49,8 +67,14 @@ def my_loans_view(request):
         'completed_loans': completed_loans,
         'total_borrowed': total_borrowed,
         'total_repaid': total_repaid,
-    })
+    }
+    return render(request, 'loans/my_loans.html', context)
 
+
+# ==============================================================================
+# 2. MEMBER APPLIES FOR A LOAN
+# Allows member to choose a loan scheme, amount, duration, and submit application.
+# ==============================================================================
 @member_required
 def apply_loan_view(request):
     profile = getattr(request.user, 'member_profile', None)
@@ -58,7 +82,7 @@ def apply_loan_view(request):
         messages.error(request, "Please complete your member profile first.")
         return redirect('core:dashboard')
 
-    # Check if user already has an active or pending loan
+    # Check if user already has an active or pending loan in progress
     has_pending = profile.loans.filter(status__in=['PENDING', 'APPROVED']).exists()
     if has_pending:
         messages.warning(request, "You already have a loan application in progress.")
@@ -70,7 +94,7 @@ def apply_loan_view(request):
             loan = form.save(commit=False)
             loan.member = profile
 
-            # Set interest rate from scheme or default 10%
+            # Set interest rate from scheme or default to 10%
             if loan.loan_product:
                 loan.interest_rate = loan.loan_product.interest_rate_percent
             else:
@@ -79,14 +103,7 @@ def apply_loan_view(request):
             loan.status = 'PENDING'
             loan.save()
 
-            notify_staff_and_admins(
-                title="New Loan Application Submitted",
-                message=f"Member {profile.member_id} ({request.user.get_full_name()}) applied for a loan of {loan.principal_amount} BDT for {loan.purpose}.",
-                link=f"/loans/{loan.id}/",
-                notification_type='INFO'
-            )
-
-            messages.success(request, f"Loan application #{loan.loan_id} for {loan.principal_amount} BDT submitted successfully!")
+            messages.success(request, f"Loan application #{loan.loan_id} for ৳{loan.principal_amount} submitted successfully!")
             return redirect('loans:loan_detail', pk=loan.pk)
         else:
             messages.error(request, "Please check the form for errors.")
@@ -113,11 +130,10 @@ def apply_loan_view(request):
     })
 
 
-# ----------------- SHARED DETAIL VIEW ----------------- #
-
-from django.db import transaction
-from apps.savings.models import SavingsAccount, SavingsTransaction
-
+# ==============================================================================
+# 3. LOAN DETAIL VIEW
+# Displays loan info, progress bar, and complete installment repayment schedule.
+# ==============================================================================
 @login_required
 def loan_detail_view(request, pk):
     loan = get_object_or_404(
@@ -139,71 +155,41 @@ def loan_detail_view(request, pk):
         'savings_account': savings_account,
     })
 
-import uuid
-from django.views.decorators.csrf import csrf_exempt
-from .models import SSLLoanPaymentSession
 
+# ==============================================================================
+# 4. PAY INSTALLMENT (Direct Debit from Savings, Cash, or MFS)
+# ==============================================================================
 @login_required
 def member_pay_installment(request, installment_id):
     installment = get_object_or_404(LoanInstallment, id=installment_id, status__in=['PENDING', 'OVERDUE'])
     loan = installment.loan
 
-    # If user is a member, verify ownership
+    # Verify ownership if user is a member
     if request.user.is_member_user:
         if not hasattr(request.user, 'member_profile') or loan.member != request.user.member_profile:
             messages.error(request, "Unauthorized access to this loan installment.")
             return redirect('core:dashboard')
 
     if request.method == 'POST':
-        payment_mode = request.POST.get('payment_mode', 'MANUAL')
         payment_method = request.POST.get('payment_method', 'SAVINGS')
         payment_reference = request.POST.get('payment_reference', '').strip()
 
-        # Check if user chose Online Payment (SSLCOMMERZ Sandbox)
-        if payment_mode == 'ONLINE' or payment_method == 'SSLCOMMERZ':
-            tran_id = f"SSL-LOAN-{loan.loan_id}-{installment.id}-{int(timezone.now().timestamp())}-{uuid.uuid4().hex[:4].upper()}"
-            SSLLoanPaymentSession.objects.create(
-                tran_id=tran_id,
-                installment=installment,
-                amount=installment.total_amount,
-                status='PENDING'
-            )
-            success_url = request.build_absolute_uri(reverse('loans:sslcommerz_loan_success'))
-            fail_url = request.build_absolute_uri(reverse('loans:sslcommerz_loan_fail'))
-            cancel_url = request.build_absolute_uri(reverse('loans:sslcommerz_loan_cancel'))
-
-            res = sslcommerz_client.initiate_payment(
-                tran_id=tran_id,
-                amount=installment.total_amount,
-                customer=request.user,
-                success_url=success_url,
-                fail_url=fail_url,
-                cancel_url=cancel_url,
-                product_name=f"Loan Repayment {loan.loan_id} Phase #{installment.installment_number}"
-            )
-
-            if res.get('status') == 'SUCCESS' and res.get('gateway_url'):
-                return redirect(res['gateway_url'])
-            else:
-                messages.error(request, f"Could not connect to SSLCOMMERZ Sandbox Gateway: {res.get('message', 'Please try again')}")
-                return redirect('loans:loan_detail', pk=loan.pk)
-
-        # Manual / Savings / MFS Payment Flow
+        # Process payment (Savings Balance, Cash, bKash, Nagad, Bank)
         with transaction.atomic():
             if payment_method == 'SAVINGS':
                 savings_account = getattr(loan.member, 'savings_account', None)
                 if not savings_account or savings_account.balance < installment.total_amount:
                     messages.error(
                         request,
-                        f"Insufficient savings balance ({savings_account.balance if savings_account else 0.00} BDT available). Required: {installment.total_amount} BDT. Please choose Online Payment (SSLCOMMERZ) or deposit funds."
+                        f"Insufficient savings balance (৳{savings_account.balance if savings_account else 0.00} available). Required: ৳{installment.total_amount}. Please deposit funds or choose Online Payment."
                     )
                     return redirect('loans:loan_detail', pk=loan.pk)
 
-                # Deduct from savings balance
+                # Deduct from member's savings
                 savings_account.balance -= installment.total_amount
                 savings_account.save(update_fields=['balance'])
 
-                # Log approved savings withdrawal / repayment transaction
+                # Log savings debit
                 SavingsTransaction.objects.create(
                     account=savings_account,
                     transaction_type='WITHDRAWAL',
@@ -233,48 +219,38 @@ def member_pay_installment(request, installment_id):
                 reference=reference
             )
 
-            # Notify member
-            notify_user(
-                user=loan.member.user,
-                title="Loan Installment Paid Successfully",
-                message=f"Phase / Installment #{installment.installment_number} of {installment.total_amount} BDT for loan {loan.loan_id} has been paid via {installment.get_payment_method_display()}. Remaining: {loan.remaining_balance} BDT.",
-                link=f"/loans/{loan.id}/",
-                notification_type='SUCCESS'
-            )
-
-            # Notify field officer and admin
-            notify_staff_and_admins(
-                title="Loan Installment Received",
-                message=f"Member {loan.member.member_id} paid Installment #{installment.installment_number} ({installment.total_amount} BDT) for loan {loan.loan_id} via {installment.get_payment_method_display()}.",
-                link=f"/loans/{loan.id}/",
-                notification_type='INFO'
-            )
-
-        messages.success(request, f"Monthly Phase / Installment #{installment.installment_number} ({installment.total_amount} BDT) has been successfully PAID!")
+        messages.success(request, f"Installment #{installment.installment_number} (৳{installment.total_amount}) has been successfully PAID!")
         return redirect('loans:loan_detail', pk=loan.pk)
 
     return redirect('loans:loan_detail', pk=loan.pk)
 
 
-# ----------------- SSLCOMMERZ ONLINE LOAN REPAYMENT ----------------- #
-
+# ==============================================================================
+# 4B. SSLCOMMERZ ONLINE LOAN REPAYMENT (SANDBOX & LIVE)
+# ==============================================================================
 @login_required
 def sslcommerz_initiate_installment(request, installment_id):
+    """
+    Directly initiates an SSLCOMMERZ Sandbox checkout session for a loan installment phase
+    and immediately redirects the user to the official gateway payment page.
+    """
     installment = get_object_or_404(LoanInstallment, id=installment_id, status__in=['PENDING', 'OVERDUE'])
     loan = installment.loan
 
+    # Authorization check: only loan owner or staff can initiate
     if request.user.is_member_user:
         if not hasattr(request.user, 'member_profile') or loan.member != request.user.member_profile:
             messages.error(request, "Unauthorized access to this loan installment.")
             return redirect('core:dashboard')
 
-    tran_id = f"SSL-LOAN-{loan.loan_id}-{installment.id}-{int(timezone.now().timestamp())}-{uuid.uuid4().hex[:4].upper()}"
+    tran_id = f"SSL-LN-{loan.loan_id}-{installment.id}-{int(timezone.now().timestamp())}-{uuid.uuid4().hex[:4].upper()}"
     SSLLoanPaymentSession.objects.create(
         tran_id=tran_id,
         installment=installment,
         amount=installment.total_amount,
         status='PENDING'
     )
+
     success_url = request.build_absolute_uri(reverse('loans:sslcommerz_loan_success'))
     fail_url = request.build_absolute_uri(reverse('loans:sslcommerz_loan_fail'))
     cancel_url = request.build_absolute_uri(reverse('loans:sslcommerz_loan_cancel'))
@@ -298,9 +274,14 @@ def sslcommerz_initiate_installment(request, installment_id):
 
 @csrf_exempt
 def sslcommerz_loan_success_view(request):
+    """
+    SSLCOMMERZ POST callback on successful installment payment.
+    Validates payment with validation API, marks installment as PAID, updates loan totals,
+    delivers notifications, and displays the repayment receipt.
+    """
     tran_id = request.POST.get('tran_id') or request.GET.get('tran_id')
     val_id = request.POST.get('val_id') or request.GET.get('val_id')
-    card_type = request.POST.get('card_type') or request.GET.get('card_type') or 'bKash-Online'
+    card_type = request.POST.get('card_type') or request.GET.get('card_type') or 'SSLCOMMERZ-Online'
     bank_tran_id = request.POST.get('bank_tran_id') or request.GET.get('bank_tran_id') or f"BNK-LOAN-{uuid.uuid4().hex[:8].upper()}"
 
     if not tran_id:
@@ -360,6 +341,9 @@ def sslcommerz_loan_success_view(request):
 
 @csrf_exempt
 def sslcommerz_loan_fail_view(request):
+    """
+    Callback when payment fails or is declined by SSLCOMMERZ.
+    """
     tran_id = request.POST.get('tran_id') or request.GET.get('tran_id')
     loan_id = None
     if tran_id:
@@ -377,6 +361,9 @@ def sslcommerz_loan_fail_view(request):
 
 @csrf_exempt
 def sslcommerz_loan_cancel_view(request):
+    """
+    Callback when customer cancels payment.
+    """
     tran_id = request.POST.get('tran_id') or request.GET.get('tran_id')
     loan_id = None
     if tran_id:
@@ -392,8 +379,9 @@ def sslcommerz_loan_cancel_view(request):
     return redirect('loans:my_loans')
 
 
-# ----------------- STAFF / ADMIN VIEWS ----------------- #
-
+# ==============================================================================
+# 5. STAFF LOAN MANAGEMENT (List, Create, Approve, Reject, Disburse)
+# ==============================================================================
 @officer_required
 def staff_loan_list(request):
     status_filter = request.GET.get('status', '')
@@ -430,6 +418,7 @@ def staff_loan_list(request):
         'completed_count': completed_count,
     })
 
+
 @officer_required
 def staff_create_loan(request):
     if request.method == 'POST':
@@ -443,14 +432,6 @@ def staff_create_loan(request):
 
             loan.status = 'PENDING'
             loan.save()
-
-            notify_user(
-                user=loan.member.user,
-                title="Loan Application Created",
-                message=f"A loan application #{loan.loan_id} for {loan.principal_amount} BDT has been initiated by officer {request.user.username}.",
-                link=f"/loans/{loan.id}/",
-                notification_type='INFO'
-            )
 
             messages.success(request, f"Loan application #{loan.loan_id} created for {loan.member.member_id}.")
             return redirect('loans:loan_detail', pk=loan.pk)
@@ -466,7 +447,12 @@ def staff_create_loan(request):
                 pass
         form = StaffLoanApplicationForm(initial=initial)
 
-    return render(request, 'loans/staff_create_loan.html', {'form': form})
+    schemes = LoanScheme.objects.filter(is_active=True)
+    return render(request, 'loans/staff_create_loan.html', {
+        'form': form,
+        'schemes': schemes
+    })
+
 
 @officer_required
 def approve_loan(request, pk):
@@ -476,16 +462,9 @@ def approve_loan(request, pk):
     loan.approved_at = timezone.now()
     loan.save()
 
-    notify_user(
-        user=loan.member.user,
-        title="Loan Application Approved!",
-        message=f"Congratulations! Your loan #{loan.loan_id} of {loan.principal_amount} BDT has been approved and is pending disbursement.",
-        link=f"/loans/{loan.id}/",
-        notification_type='SUCCESS'
-    )
-
     messages.success(request, f"Loan #{loan.loan_id} has been approved.")
     return redirect('loans:loan_detail', pk=loan.pk)
+
 
 @officer_required
 def reject_loan(request, pk):
@@ -495,16 +474,9 @@ def reject_loan(request, pk):
     loan.approved_at = timezone.now()
     loan.save()
 
-    notify_user(
-        user=loan.member.user,
-        title="Loan Application Update",
-        message=f"Your loan application #{loan.loan_id} of {loan.principal_amount} BDT was rejected. Contact your officer for details.",
-        link=f"/loans/{loan.id}/",
-        notification_type='DANGER'
-    )
-
     messages.info(request, f"Loan #{loan.loan_id} has been marked as rejected.")
     return redirect('loans:loan_detail', pk=loan.pk)
+
 
 @officer_required
 def disburse_loan(request, pk):
@@ -513,19 +485,12 @@ def disburse_loan(request, pk):
     loan.disbursed_at = timezone.now()
     loan.save()
 
-    # Generate installment schedule
+    # Automatically generate monthly installment schedule
     loan.generate_installments()
-
-    notify_user(
-        user=loan.member.user,
-        title="Loan Disbursed Successfully",
-        message=f"Funds for loan #{loan.loan_id} ({loan.principal_amount} BDT) have been disbursed. Your installment schedule is now active.",
-        link=f"/loans/{loan.id}/",
-        notification_type='SUCCESS'
-    )
 
     messages.success(request, f"Loan #{loan.loan_id} disbursed successfully. Installments schedule generated.")
     return redirect('loans:loan_detail', pk=loan.pk)
+
 
 @officer_required
 def collect_installment(request, installment_id):
@@ -534,19 +499,13 @@ def collect_installment(request, installment_id):
 
     installment.mark_as_paid(collector=request.user)
 
-    notify_user(
-        user=loan.member.user,
-        title="Installment Payment Received",
-        message=f"Installment #{installment.installment_number} of {installment.total_amount} BDT for loan #{loan.loan_id} has been recorded. Remaining: {loan.remaining_balance} BDT.",
-        link=f"/loans/{loan.id}/",
-        notification_type='SUCCESS'
-    )
-
-    messages.success(request, f"Installment #{installment.installment_number} collected successfully ({installment.total_amount} BDT).")
+    messages.success(request, f"Installment #{installment.installment_number} collected successfully (৳{installment.total_amount}).")
     return redirect('loans:loan_detail', pk=loan.pk)
 
-# ----------------- SCHEMES (ADMIN) ----------------- #
 
+# ==============================================================================
+# 7. LOAN SCHEMES / PRODUCTS MANAGEMENT (Admin Only)
+# ==============================================================================
 @admin_required
 def loan_schemes_list(request):
     schemes = LoanScheme.objects.all().order_by('-id')
@@ -566,8 +525,10 @@ def loan_schemes_list(request):
         'form': form,
     })
 
-# ----------------- LOAN STATEMENT GENERATOR ----------------- #
 
+# ==============================================================================
+# 8. LOAN STATEMENT GENERATOR & PDF EXPORT
+# ==============================================================================
 @login_required
 def loan_statement_view(request, pk=None):
     if request.user.is_member_user:
@@ -602,12 +563,7 @@ def loan_statement_view(request, pk=None):
         pending_installments_count = installments.filter(status='PENDING').count()
         overdue_installments_count = installments.filter(status='OVERDUE').count()
 
-        if request.GET.get('format') == 'pdf' or request.GET.get('export') == 'pdf':
-            pdf_bytes = generate_loan_statement_pdf(loan, installments)
-            filename = f"Loan_Statement_{loan.loan_id}.pdf"
-            response = HttpResponse(pdf_bytes, content_type='application/pdf')
-            response['Content-Disposition'] = f'inline; filename="{filename}"'
-            return response
+    # Step 5: Render statement template (supports standard browser printing)
 
     return render(request, 'loans/loan_statement.html', {
         'loan': loan,
