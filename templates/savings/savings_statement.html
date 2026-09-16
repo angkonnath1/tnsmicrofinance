@@ -50,7 +50,7 @@
                     <option value="{{ m.id }}" data-id="{{ m.member_id }}" data-name="{{ m.user.get_full_name }}"
                         data-phone="{{ m.user.phone|default:'' }}" data-username="{{ m.user.username }}"
                         data-search="{{ m.member_id }} {{ m.user.get_full_name }} {{ m.user.phone|default:'' }} {{ m.user.username }}"
-                        {% if profile.id==m.id %}selected{% endif %}>
+                        {% if profile.id == m.id %}selected{% endif %}>
                         {{ m.member_id }} &bull; {{ m.user.get_full_name }}
                     </option>
                     {% endfor %}
@@ -71,9 +71,9 @@
             <div class="form-group" style="margin-bottom: 0;">
                 <label class="form-label">Transaction Type</label>
                 <select name="type" class="form-select">
-                    <option value="ALL" {% if trx_type=='ALL' %}selected{% endif %}>All Transactions</option>
-                    <option value="DEPOSIT" {% if trx_type=='DEPOSIT' %}selected{% endif %}>Deposits Only</option>
-                    <option value="WITHDRAWAL" {% if trx_type=='WITHDRAWAL' %}selected{% endif %}>Withdrawals Only
+                    <option value="ALL" {% if trx_type == 'ALL' %}selected{% endif %}>All Transactions</option>
+                    <option value="DEPOSIT" {% if trx_type == 'DEPOSIT' %}selected{% endif %}>Deposits Only</option>
+                    <option value="WITHDRAWAL" {% if trx_type == 'WITHDRAWAL' %}selected{% endif %}>Withdrawals Only
                     </option>
                 </select>
             </div>
