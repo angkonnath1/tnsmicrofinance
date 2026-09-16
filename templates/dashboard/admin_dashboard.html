@@ -45,30 +45,13 @@
 </div>
 
 <!-- Quick Action Management Bar -->
-<div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
- <a href="{% url 'core:daily_master_pdf' %}" class="btn btn-primary">
- 
- <strong>Download Today's All-Transactions PDF</strong>
- </a>
- <a href="{% url 'core:daily_master_report' %}" class="btn btn-secondary">
- 
- Daily Master Daybook
- </a>
- <a href="{% url 'accounts:officer_list' %}" class="btn btn-secondary">
- 
- Manage Officers
- </a>
- <a href="{% url 'loans:schemes_list' %}" class="btn btn-secondary">
- 
- Loan Products
- </a>
- <a href="{% url 'core:financial_reports' %}" class="btn btn-secondary">
- 
- Financial Reports
- </a>
- <a href="/django-admin/" target="_blank" class="btn btn-outline-primary">
- 
- Django Backend Admin </a>
+<div style="display: flex; gap: 0.75rem; margin-bottom: 2rem; flex-wrap: wrap;">
+  <a href="{% url 'core:daily_master_pdf' %}" class="btn btn-primary">Download Today's Transactions PDF</a>
+  <a href="{% url 'core:daily_master_report' %}" class="btn btn-secondary">Daily Master Daybook</a>
+  <a href="{% url 'accounts:officer_list' %}" class="btn btn-secondary">Manage Officers</a>
+  <a href="{% url 'loans:schemes_list' %}" class="btn btn-secondary">Loan Products</a>
+  <a href="{% url 'core:financial_reports' %}" class="btn btn-secondary">Financial Reports</a>
+  <a href="/django-admin/" target="_blank" class="btn btn-outline-primary">Django Admin</a>
 </div>
 
 <!-- 2-Column Overview Tables -->

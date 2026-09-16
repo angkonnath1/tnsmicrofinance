@@ -45,23 +45,11 @@
 </div>
 
 <!-- Action Bar -->
-<div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
- <a href="{% url 'members:member_create' %}" class="btn btn-primary">
- 
- Enroll Member
- </a>
- <a href="{% url 'savings:staff_transactions' %}" class="btn btn-secondary">
- 
- Savings &amp; Deposit Queue
- </a>
- <a href="{% url 'loans:staff_loan_list' %}" class="btn btn-secondary">
- 
- Manage Loans
- </a>
- <a href="{% url 'core:collection_sheet' %}" class="btn btn-outline-primary">
- 
- Open Daily Collection Sheet
- </a>
+<div style="display: flex; gap: 0.75rem; margin-bottom: 2rem; flex-wrap: wrap;">
+  <a href="{% url 'members:member_create' %}" class="btn btn-primary">Enroll Member</a>
+  <a href="{% url 'savings:staff_transactions' %}" class="btn btn-secondary">Savings &amp; Deposit Queue</a>
+  <a href="{% url 'loans:staff_loan_list' %}" class="btn btn-secondary">Manage Loans</a>
+  <a href="{% url 'core:collection_sheet' %}" class="btn btn-outline-primary">Daily Collection Sheet</a>
 </div>
 
 <!-- Pending Member Registrations (KYC Review) Card -->

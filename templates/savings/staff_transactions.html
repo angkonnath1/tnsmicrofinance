@@ -23,20 +23,11 @@
  <button type="submit" class="btn btn-secondary">Filter</button>
  </form>
 
- <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
- <a href="{% url 'savings:statement' %}" class="btn btn-outline-primary">
- 
- Statement Generator
- </a>
- <button class="btn btn-primary" onclick="openModal('recordDepositModal')">
- 
- Record Deposit
- </button>
- <button class="btn btn-secondary" onclick="openModal('recordWithdrawalModal')">
- 
- Record Withdrawal
- </button>
- </div>
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <a href="{% url 'savings:statement' %}" class="btn btn-outline-primary">Statement Generator</a>
+    <button type="button" class="btn btn-primary" onclick="openModal('recordDepositModal')">Record Deposit</button>
+    <button type="button" class="btn btn-secondary" onclick="openModal('recordWithdrawalModal')">Record Withdrawal</button>
+  </div>
 </div>
 
 <div class="content-card">

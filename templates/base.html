@@ -84,109 +84,53 @@
  </button>
  </div>
 
- <nav class="sidebar-nav">
- <!-- Common Dashboard Link -->
- <a href="{% url 'core:dashboard' %}"
- class="{% if request.resolver_match.url_name == 'dashboard' or 'dashboard' in request.resolver_match.url_name %}active{% endif %}">
- 
- Dashboard
- </a>
+      <nav class="sidebar-nav">
+        <!-- Common Dashboard Link -->
+        <a href="{% url 'core:dashboard' %}"
+           class="{% if request.resolver_match.url_name == 'dashboard' or 'dashboard' in request.resolver_match.url_name %}active{% endif %}">
+          Dashboard
+        </a>
 
- {% if user.is_member_user %}
- <!-- Member Specific Navigation -->
- <div class="nav-section-title">My Finance</div>
- <a href="{% url 'savings:my_savings' %}" class="{% if 'savings/my-account' in request.path or 'add-money-online' in request.path %}active{% endif %}">
- 
- My Savings
- </a>
- <a href="{% url 'loans:my_loans' %}" class="{% if 'loans/my-loans' in request.path or 'loans/apply' in request.path %}active{% endif %}">
- 
- My Loans
- </a>
- <a href="{% url 'savings:statement' %}" class="{% if 'savings/statement' in request.path %}active{% endif %}">
- 
- Savings and Withdrawals
- </a>
- <a href="{% url 'loans:general_statement' %}"
- class="{% if 'loans/statement' in request.path %}active{% endif %}">
- 
- Loan Statement
- </a>
- <a href="{% url 'notifications:list' %}"
- class="{% if 'notifications' in request.path %}active{% endif %}"
- style="display: flex; align-items: center; justify-content: space-between;">
- <div style="display: flex; align-items: center; gap: 0.75rem;">
- 
- <span>Notifications</span>
- </div>
- {% if unread_notifications_count > 0 %}
- <span class="badge badge-danger" style="background: #ef4444; color: #ffffff; font-size: 0.7rem; font-weight: 800; border-radius: 9999px; padding: 2px 7px;">
- {{ unread_notifications_count }}
- </span>
- {% endif %}
- </a>
- {% endif %}
+        {% if user.is_member_user %}
+        <!-- Member Specific Navigation -->
+        <div class="nav-section-title">My Finance</div>
+        <a href="{% url 'savings:my_savings' %}" class="{% if 'savings/my-account' in request.path or 'add-money-online' in request.path %}active{% endif %}">My Savings</a>
+        <a href="{% url 'loans:my_loans' %}" class="{% if 'loans/my-loans' in request.path or 'loans/apply' in request.path %}active{% endif %}">My Loans</a>
+        <a href="{% url 'savings:statement' %}" class="{% if 'savings/statement' in request.path %}active{% endif %}">Savings Statement</a>
+        <a href="{% url 'loans:general_statement' %}" class="{% if 'loans/statement' in request.path %}active{% endif %}">Loan Statement</a>
+        <a href="{% url 'notifications:list' %}" class="{% if 'notifications' in request.path %}active{% endif %}" style="display: flex; align-items: center; justify-content: space-between;">
+          <span>Notifications</span>
+          {% if unread_notifications_count > 0 %}
+          <span class="badge badge-danger" style="background: #ef4444; color: #ffffff; font-size: 0.7rem; font-weight: 800; border-radius: 9999px; padding: 2px 7px;">
+            {{ unread_notifications_count }}
+          </span>
+          {% endif %}
+        </a>
+        {% endif %}
 
- {% if user.is_officer_user or user.is_admin_user or user.is_superuser %}
- <!-- Staff / Officer Operations -->
- <div class="nav-section-title">Field Operations</div>
- <a href="{% url 'members:member_list' %}" class="{% if 'members' in request.path %}active{% endif %}">
- 
- Members Directory
- </a>
- <a href="{% url 'savings:staff_transactions' %}"
- class="{% if 'savings/transactions' in request.path %}active{% endif %}">
- 
- Savings &amp; Deposits
- </a>
- <a href="{% url 'loans:staff_loan_list' %}"
- class="{% if 'loans' in request.path and not 'schemes' in request.path and not 'statement' in request.path %}active{% endif %}">
- 
- Loan Management
- </a>
- <a href="{% url 'core:collection_sheet' %}"
- class="{% if 'collection-sheet' in request.path %}active{% endif %}">
- 
- Daily Sheet Generator
- </a>
- <a href="{% url 'savings:statement' %}" class="{% if 'savings/statement' in request.path %}active{% endif %}">
- 
- Savings Statements
- </a>
- <a href="{% url 'loans:general_statement' %}"
- class="{% if 'loans/statement' in request.path %}active{% endif %}">
- 
- Loan Statements
- </a>
- {% endif %}
+        {% if user.is_officer_user or user.is_admin_user or user.is_superuser %}
+        <!-- Staff / Officer Operations -->
+        <div class="nav-section-title">Field Operations</div>
+        <a href="{% url 'members:member_list' %}" class="{% if 'members' in request.path %}active{% endif %}">Members Directory</a>
+        <a href="{% url 'savings:staff_transactions' %}" class="{% if 'savings/transactions' in request.path %}active{% endif %}">Savings &amp; Deposits</a>
+        <a href="{% url 'loans:staff_loan_list' %}" class="{% if 'loans' in request.path and not 'schemes' in request.path and not 'statement' in request.path %}active{% endif %}">Loan Management</a>
+        <a href="{% url 'core:collection_sheet' %}" class="{% if 'collection-sheet' in request.path %}active{% endif %}">Daily Sheet Generator</a>
+        <a href="{% url 'savings:statement' %}" class="{% if 'savings/statement' in request.path %}active{% endif %}">Savings Statements</a>
+        <a href="{% url 'loans:general_statement' %}" class="{% if 'loans/statement' in request.path %}active{% endif %}">Loan Statements</a>
+        {% endif %}
 
- {% if user.is_admin_user or user.is_superuser %}
- <!-- Admin Controls -->
- <div class="nav-section-title">Administration</div>
- <a href="{% url 'accounts:officer_list' %}" class="{% if 'officers' in request.path %}active{% endif %}">
- 
- Manage Officers
- </a>
- <a href="{% url 'loans:schemes_list' %}" class="{% if 'schemes' in request.path %}active{% endif %}">
- 
- Loan Products
- </a>
- <a href="{% url 'core:daily_master_report' %}" class="{% if 'daily-transactions' in request.path %}active{% endif %}">
- 
- Daily Master Daybook
- </a>
- {% endif %}
+        {% if user.is_admin_user or user.is_superuser %}
+        <!-- Admin Controls -->
+        <div class="nav-section-title">Administration</div>
+        <a href="{% url 'accounts:officer_list' %}" class="{% if 'officers' in request.path %}active{% endif %}">Manage Officers</a>
+        <a href="{% url 'loans:schemes_list' %}" class="{% if 'schemes' in request.path %}active{% endif %}">Loan Products</a>
+        <a href="{% url 'core:daily_master_report' %}" class="{% if 'daily-transactions' in request.path %}active{% endif %}">Daily Master Daybook</a>
+        {% endif %}
 
- <div class="nav-section-title">Personal</div>
- <a href="{% url 'accounts:profile' %}" class="{% if 'profile' in request.path %}active{% endif %}">
- 
- Profile
- </a>
- <a href="{% url 'accounts:logout' %}" style="color: #f87171;">
- 
- Logout
- </a>
- </nav>
+        <div class="nav-section-title">Personal</div>
+        <a href="{% url 'accounts:profile' %}" class="{% if 'profile' in request.path %}active{% endif %}">Profile</a>
+        <a href="{% url 'accounts:logout' %}" style="color: #f87171;">Logout</a>
+      </nav>
 
  <div class="sidebar-footer">
  <div class="user-mini-profile">

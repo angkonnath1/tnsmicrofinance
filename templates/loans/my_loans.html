@@ -32,10 +32,7 @@
 </div>
 
 <div style="display: flex; justify-content: flex-end; margin-bottom: 1.5rem;">
- <a href="{% url 'loans:apply_loan' %}" class="btn btn-primary">
- 
- Apply for New Loan
- </a>
+  <a href="{% url 'loans:apply_loan' %}" class="btn btn-primary">Apply for New Loan</a>
 </div>
 
 <div class="content-card">
@@ -77,11 +74,9 @@
  </td>
  <td>
  {% if loan.status == 'DISBURSED' %}
- <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-sm btn-primary" style="display: inline-flex; align-items: center; gap: 4px;">
- Pay Phase </a>
+ <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-sm btn-primary">Pay Phase</a>
  {% else %}
- <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-sm btn-outline-primary">
- View Detail </a>
+ <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-sm btn-outline-primary">View Detail</a>
  {% endif %}
  </td>
  </tr>

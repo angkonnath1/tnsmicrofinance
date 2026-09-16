@@ -46,10 +46,7 @@
  <button type="submit" class="btn btn-secondary">Filter</button>
  </form>
 
- <a href="{% url 'loans:staff_create_loan' %}" class="btn btn-primary">
- 
- Create Loan for Member
- </a>
+ <a href="{% url 'loans:staff_create_loan' %}" class="btn btn-primary">Create Loan for Member</a>
 </div>
 
 <div class="content-card">
@@ -97,8 +94,7 @@
  <span class="badge {{ loan.get_status_badge }}">{{ loan.get_status_display }}</span>
  </td>
  <td>
- <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-sm btn-outline-primary">
- Manage </a>
+ <a href="{% url 'loans:loan_detail' loan.id %}" class="btn btn-sm btn-outline-primary">Manage</a>
  </td>
  </tr>
  {% empty %}

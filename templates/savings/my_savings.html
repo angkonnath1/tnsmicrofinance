@@ -33,18 +33,16 @@
 </div>
 
 <!-- Action Buttons -->
-<div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; align-items: center;">
- <a href="{% url 'savings:add_money_online' %}" class="btn btn-primary" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.4rem; font-weight: 700; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
- 
- <strong>SSLCOMMERZ Online Deposit</strong>
- </a>
- <button class="btn btn-secondary" onclick="openModal('withdrawalModal')">
- 
- Request Withdrawal
- </button>
- <a href="{% url 'savings:statement' %}" class="btn btn-outline-primary" style="margin-left: auto;">
- 
- Account Statement </a>
+<div style="display: flex; gap: 0.75rem; margin-bottom: 2rem; flex-wrap: wrap; align-items: center;">
+  <a href="{% url 'savings:add_money_online' %}" class="btn btn-success" style="padding: 0.6rem 1.25rem; font-weight: 700;">
+    SSLCOMMERZ Online Deposit
+  </a>
+  <button type="button" class="btn btn-secondary" onclick="openModal('withdrawalModal')">
+    Request Withdrawal
+  </button>
+  <a href="{% url 'savings:statement' %}" class="btn btn-outline-primary" style="margin-left: auto;">
+    Account Statement
+  </a>
 </div>
 
 <!-- Transaction History Table -->
