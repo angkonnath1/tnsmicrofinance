@@ -21,13 +21,9 @@
         <div class="stat-details">
             <div class="stat-label">Next Installment Due</div>
             {% if next_installment %}
-            <div class="stat-value" style="font-size: 1.2rem;">{{ next_installment.total_amount|clean_amount }} BDT
-            </div>
-            <div class="stat-subtitle" style="color: var(--warning); font-weight: 600;">Due on {{
-                next_installment.due_date|date:"M d, Y" }}</div>
+            <div class="stat-value" style="font-size: 1.2rem;">{{ next_installment.total_amount|clean_amount }} BDT</div>
             {% else %}
             <div class="stat-value" style="font-size: 1.2rem; color: #64748b;">No Dues</div>
-            <div class="stat-subtitle">All caught up!</div>
             {% endif %}
         </div>
     </div>
