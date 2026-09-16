@@ -1,4 +1,3 @@
-import os
 import logging
 import requests
 from decimal import Decimal

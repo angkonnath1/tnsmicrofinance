@@ -2,7 +2,7 @@ import re
 from django.core.paginator import Paginator
 from django.core.exceptions import ValidationError
 from apps.accounts.models import CustomUser
-from apps.core.validators import validate_bd_phone, validate_nid_number
+from apps.core.validators import validate_bd_phone
 
 
 def paginate(request, queryset, per_page=10):

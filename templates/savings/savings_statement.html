@@ -105,7 +105,7 @@
                     TNS
                 </div>
                 <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--text-main); margin: 0;">
-                    Touch &amp; Solve Micro Banking System
+                    Touch &amp; Solve Micro Finance
                 </h2>
             </div>
             <p style="font-size: 0.8rem; color: #64748b; margin: 0;">
@@ -303,8 +303,7 @@
         .app-sidebar,
         .top-navbar,
         .no-print,
-        .pagination-wrapper,
-        #agentation-root {
+        .pagination-wrapper {
             display: none !important;
         }
 
@@ -333,7 +332,7 @@
 
         if (!searchInput || !suggestionsList || !select) return;
 
-        var members = Array.from(select.options).map(function(opt) {
+        var members = Array.from(select.options).map(function (opt) {
             return {
                 id: opt.value,
                 label: (opt.getAttribute('data-id') ? (opt.getAttribute('data-id') + ' - ' + (opt.getAttribute('data-name') || '')) : opt.text),
@@ -344,21 +343,21 @@
         function showSuggestions(q) {
             q = (q || '').toLowerCase().trim();
             if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
-            var matches = members.filter(function(m) { return !q || m.search.includes(q); });
+            var matches = members.filter(function (m) { return !q || m.search.includes(q); });
             if (matches.length === 0) {
                 suggestionsList.innerHTML = '<div style="padding: 12px; color: #94a3b8; text-align: center; font-size: 0.85rem;">No members found matching "' + q + '"</div>';
             } else {
-                suggestionsList.innerHTML = matches.map(function(m) {
+                suggestionsList.innerHTML = matches.map(function (m) {
                     return '<div class="suggestion-item" data-id="' + m.id + '" data-label="' + m.label + '" style="padding: 10px 14px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 0.88rem; font-weight: 600;">' + m.label + '</div>';
                 }).join('');
             }
             suggestionsList.style.display = 'block';
         }
 
-        searchInput.addEventListener('input', function() { showSuggestions(searchInput.value); });
-        searchInput.addEventListener('focus', function() { showSuggestions(searchInput.value); });
+        searchInput.addEventListener('input', function () { showSuggestions(searchInput.value); });
+        searchInput.addEventListener('focus', function () { showSuggestions(searchInput.value); });
 
-        suggestionsList.addEventListener('click', function(e) {
+        suggestionsList.addEventListener('click', function (e) {
             var item = e.target.closest('.suggestion-item');
             if (item) {
                 if (memberIdInput) memberIdInput.value = item.getAttribute('data-id');
@@ -369,14 +368,14 @@
             }
         });
 
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (!searchInput.contains(e.target) && !suggestionsList.contains(e.target)) {
                 suggestionsList.style.display = 'none';
             }
         });
 
         if (clearBtn) {
-            clearBtn.addEventListener('click', function() {
+            clearBtn.addEventListener('click', function () {
                 searchInput.value = '';
                 if (memberIdInput) memberIdInput.value = '';
                 showSuggestions('');

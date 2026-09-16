@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
 from decimal import Decimal
 from datetime import date
-from django.utils import timezone
 from apps.accounts.models import CustomUser
 from apps.members.models import MemberProfile
 from apps.savings.models import SavingsAccount

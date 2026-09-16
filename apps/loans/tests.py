@@ -2,7 +2,7 @@ from django.test import TestCase
 from decimal import Decimal
 from apps.accounts.models import CustomUser
 from apps.members.models import MemberProfile
-from apps.loans.models import LoanApplication, LoanInstallment
+from apps.loans.models import LoanApplication
 
 class LoansTest(TestCase):
     def setUp(self):

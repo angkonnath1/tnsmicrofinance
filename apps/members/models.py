@@ -1,7 +1,6 @@
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
-import uuid
 from apps.core.validators import (
     validate_bd_phone,
     validate_nid_number,
