@@ -121,116 +121,147 @@
  {% endif %}
  </td>
  <td>{{ inst.paid_date|date:"M d, Y"|default:'-' }}</td>
- <td>
- {% if inst.status != 'PAID' %}
- <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
- <a href="{% url 'loans:sslcommerz_initiate_installment' inst.id %}"
- class="btn btn-sm btn-primary"
- style="display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, #059669 0%, #10b981 100%); border: none; font-weight: 700; box-shadow: 0 2px 6px rgba(16,185,129,0.3);"
- title="Pay online via SSLCOMMERZ Sandbox Gateway (bKash, Nagad, Cards)">
- Pay Phase #{{ inst.installment_number }}
- </a>
- <button class="btn btn-sm btn-outline-secondary"
- onclick="openPaymentModal({{ inst.id }}, {{ inst.installment_number }}, '{{ inst.total_amount|clean_amount }}', '{{ inst.due_date|date:'M d, Y' }}')"
- title="Pay via deduction from your savings balance">
- Savings Deduction
- </button>
- {% if not user.is_member_user %}
- <button class="btn btn-sm btn-outline-primary"
- onclick="openPaymentModal({{ inst.id }}, {{ inst.installment_number }}, '{{ inst.total_amount|clean_amount }}', '{{ inst.due_date|date:'M d, Y' }}')">
- Collect
- </button>
- {% endif %}
- </div>
- {% else %}
- <span
- style="color: var(--text-main); font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
- Settled
- </span>
- {% endif %}
- </td>
- </tr>
- {% empty %}
- <tr>
- <td colspan="10" style="text-align: center; padding: 2.5rem; color: #94a3b8;">
- Installment schedule will be generated once this loan is disbursed by an officer or admin.
- </td>
- </tr>
- {% endfor %}
- </tbody>
- </table>
- </div>
-</div>
+<td>
+                  {% if inst.status != 'PAID' %}
+                  <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap;">
+                    <a href="{% url 'loans:sslcommerz_initiate_installment' inst.id %}"
+                       class="btn btn-sm btn-primary"
+                       style="display: inline-flex; align-items: center; gap: 4px; background: linear-gradient(135deg, #059669 0%, #10b981 100%); border: none; font-weight: 700; box-shadow: 0 2px 6px rgba(16,185,129,0.3);"
+                       title="Pay online via SSLCOMMERZ Sandbox Gateway (bKash, Nagad, Cards)">
+                      Pay Phase #{{ inst.installment_number }}
+                    </a>
+                    <button type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            data-installment-id="{{ inst.id }}"
+                            data-installment-number="{{ inst.installment_number }}"
+                            data-amount="{{ inst.total_amount|clean_amount }}"
+                            data-due-date="{{ inst.due_date|date:'M d, Y' }}"
+                            onclick="openPaymentModal(this)"
+                            title="Pay via deduction from your savings balance">
+                      Savings Deduction
+                    </button>
+                    {% if not user.is_member_user %}
+                    <a href="{% url 'loans:collect_installment' inst.id %}"
+                       class="btn btn-sm btn-outline-primary"
+                       onclick="return confirm('Confirm direct collection of phase #{{ inst.installment_number }} ({{ inst.total_amount|clean_amount }} BDT)?')"
+                       title="Record direct payment / collection">
+                      Collect
+                    </a>
+                    {% endif %}
+                  </div>
+                  {% else %}
+                  <span
+                    style="color: var(--text-main); font-weight: 700; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
+                    Settled
+                  </span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="10" style="text-align: center; padding: 2.5rem; color: #94a3b8;">
+                  Installment schedule will be generated once this loan is disbursed by an officer or admin.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-<!-- Modal: Pay Monthly Phase / Installment -->
-<div class="modal-backdrop" id="payInstallmentModal">
- <div class="modal-content" style="max-width: 520px;">
- <div class="modal-header">
- <h3 id="modalInstallmentTitle">Pay Loan Monthly Phase</h3>
- <button class="btn-sm btn-secondary" onclick="closeModal('payInstallmentModal')">Close</button>
- </div>
- <form method="post" id="payInstallmentForm" action="">
- {% csrf_token %}
- <div class="modal-body">
+      <!-- Modal: Pay Monthly Phase / Installment -->
+      <div class="modal-backdrop" id="payInstallmentModal">
+        <div class="modal-content" style="max-width: 520px;">
+          <div class="modal-header">
+            <h3 id="modalInstallmentTitle">Pay Loan Monthly Phase</h3>
+            <button class="btn-sm btn-secondary" onclick="closeModal('payInstallmentModal')">Close</button>
+          </div>
+          <form method="post" id="payInstallmentForm" action="">
+            {% csrf_token %}
+            <div class="modal-body">
 
- <!-- Summary Box -->
- <div
- style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.25rem;">
- <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
- <span style="color: #64748b; font-size: 0.85rem;">Loan ID:</span>
- <strong>{{ loan.loan_id }}</strong>
- </div>
- <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
- <span style="color: #64748b; font-size: 0.85rem;">Phase Due Date:</span>
- <strong id="modalDueDate">-</strong>
- </div>
- <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
- <span style="color: #64748b; font-size: 0.85rem;">Phase Amount:</span>
- <strong style="color: var(--text-main); font-size: 1.1rem;"><span id="modalAmount">0.00</span> BDT</strong>
- </div>
- <div
- style="border-top: 1px dashed #cbd5e1; padding-top: 0.5rem; display: flex; justify-content: space-between; font-size: 0.85rem;">
- <span style="color: #64748b;">Your Savings Balance:</span>
- <strong>{{ savings_account.balance|default:"0"|clean_amount }} BDT</strong>
- </div>
- </div>
+              <!-- Summary Box -->
+              <div
+                style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 1rem; margin-bottom: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span style="color: #64748b; font-size: 0.85rem;">Loan ID:</span>
+                  <strong>{{ loan.loan_id }}</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span style="color: #64748b; font-size: 0.85rem;">Phase Due Date:</span>
+                  <strong id="modalDueDate">-</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span style="color: #64748b; font-size: 0.85rem;">Phase Amount:</span>
+                  <strong style="color: var(--text-main); font-size: 1.1rem;"><span id="modalAmount">0.00</span> BDT</strong>
+                </div>
+                <div
+                  style="border-top: 1px dashed #cbd5e1; padding-top: 0.5rem; display: flex; justify-content: space-between; font-size: 0.85rem;">
+                  <span style="color: #64748b;">Your Savings Balance:</span>
+                  <strong>{{ savings_account.balance|default:"0"|clean_amount }} BDT</strong>
+                </div>
+              </div>
 
- <!-- Payment Method Selection -->
- <div class="form-group">
- <label class="form-label">Payment Method *</label>
- <select name="payment_method" id="paymentMethodSelect" class="form-select">
- <option value="SAVINGS" selected>Deduction from the savings</option>
- </select>
- </div>
+              <!-- Payment Method Selection -->
+              <div class="form-group">
+                <label class="form-label">Payment Method *</label>
+                <select name="payment_method" id="paymentMethodSelect" class="form-select">
+                  <option value="SAVINGS" selected>Deduction from the savings</option>
+                </select>
+              </div>
 
- <div id="savingsBalanceNotice"
- style="font-size: 0.85rem; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 10px 12px; margin-top: 0.75rem;">
- Amount will be deducted from savings balance and the installment will be settled instantly.
- </div>
+              <div id="savingsBalanceNotice"
+                style="font-size: 0.85rem; color: #059669; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 6px; padding: 10px 12px; margin-top: 0.75rem;">
+                Amount will be deducted from savings balance and the installment will be settled instantly.
+              </div>
 
- </div>
- <div class="modal-footer">
- <button type="button" class="btn btn-secondary" onclick="closeModal('payInstallmentModal')">Cancel</button>
- <button type="submit" class="btn btn-primary" id="confirmPayBtn">
- Confirm &amp; Settle Installment
- </button>
- </div>
- </form>
- </div>
-</div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" onclick="closeModal('payInstallmentModal')">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="confirmPayBtn">
+                Confirm &amp; Settle Installment
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
- function openPaymentModal(installmentId, installmentNumber, totalAmount, dueDate) {
- document.getElementById('modalInstallmentTitle').innerText = 'Pay Monthly Phase #' + installmentNumber;
- document.getElementById('modalDueDate').innerText = dueDate;
- document.getElementById('modalAmount').innerText = totalAmount;
+  function openPaymentModal(target, installmentNumber, totalAmount, dueDate) {
+    let id, num, amount, due;
+    if (target && target.dataset) {
+      id = target.dataset.installmentId;
+      num = target.dataset.installmentNumber;
+      amount = target.dataset.amount;
+      due = target.dataset.dueDate;
+    } else {
+      id = target;
+      num = installmentNumber;
+      amount = totalAmount;
+      due = dueDate;
+    }
 
- // Set form action URL
- var form = document.getElementById('payInstallmentForm');
- form.action = '/loans/installments/' + installmentId + '/pay/';
+    var title = document.getElementById('modalInstallmentTitle');
+    if (title) title.innerText = 'Pay Monthly Phase #' + (num || '');
 
- openModal('payInstallmentModal');
- }
+    var dueEl = document.getElementById('modalDueDate');
+    if (dueEl) dueEl.innerText = due || '-';
+
+    var amountEl = document.getElementById('modalAmount');
+    if (amountEl) amountEl.innerText = amount || '0.00';
+
+    // Set form action URL
+    var form = document.getElementById('payInstallmentForm');
+    if (form && id) {
+      form.action = '/loans/installments/' + id + '/pay/';
+    }
+
+    if (typeof openModal === 'function') {
+      openModal('payInstallmentModal');
+    }
+  }
 </script>
 
 {% endblock %}
