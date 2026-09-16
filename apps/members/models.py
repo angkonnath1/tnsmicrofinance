@@ -1,6 +1,13 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 import uuid
+from apps.core.validators import (
+    validate_bd_phone,
+    validate_nid_number,
+    validate_adult_birth_date,
+    validate_image_file,
+)
 
 class MemberProfile(models.Model):
     STATUS_CHOICES = (
@@ -23,9 +30,9 @@ class MemberProfile(models.Model):
     member_id = models.CharField(max_length=30, unique=True, blank=True)
     father_or_husband_name = models.CharField(max_length=100, blank=True, null=True)
     mother_name = models.CharField(max_length=100, blank=True, null=True)
-    nid_number = models.CharField(max_length=50, blank=True, null=True, verbose_name="National ID (NID)")
+    nid_number = models.CharField(max_length=50, blank=True, null=True, verbose_name="National ID (NID)", validators=[validate_nid_number])
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, default='MALE')
-    date_of_birth = models.DateField(blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True, validators=[validate_adult_birth_date])
     occupation = models.CharField(max_length=100, blank=True, null=True)
     present_address = models.TextField(blank=True, null=True)
     permanent_address = models.TextField(blank=True, null=True)
@@ -33,13 +40,13 @@ class MemberProfile(models.Model):
     # Nominee Details
     nominee_name = models.CharField(max_length=100, blank=True, null=True)
     nominee_relation = models.CharField(max_length=50, blank=True, null=True)
-    nominee_nid = models.CharField(max_length=50, blank=True, null=True)
-    nominee_phone = models.CharField(max_length=20, blank=True, null=True)
+    nominee_nid = models.CharField(max_length=50, blank=True, null=True, validators=[validate_nid_number])
+    nominee_phone = models.CharField(max_length=20, blank=True, null=True, validators=[validate_bd_phone])
 
     # Document & Identification Photos
-    member_photo = models.ImageField(upload_to='members/photos/', blank=True, null=True, verbose_name="Photo of Member")
-    nid_photo = models.ImageField(upload_to='members/nid/', blank=True, null=True, verbose_name="Photo of NID")
-    nominee_photo = models.ImageField(upload_to='members/nominees/', blank=True, null=True, verbose_name="Photo of Nominee")
+    member_photo = models.ImageField(upload_to='members/photos/', blank=True, null=True, verbose_name="Photo of Member", validators=[validate_image_file])
+    nid_photo = models.ImageField(upload_to='members/nid/', blank=True, null=True, verbose_name="Photo of NID", validators=[validate_image_file])
+    nominee_photo = models.ImageField(upload_to='members/nominees/', blank=True, null=True, verbose_name="Photo of Nominee", validators=[validate_image_file])
 
     # Management & Officer Assignment
     assigned_officer = models.ForeignKey(
@@ -67,15 +74,30 @@ class MemberProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def clean(self):
+        super().clean()
+        if self.nid_number and self.nominee_nid and self.nid_number == self.nominee_nid:
+            raise ValidationError({'nominee_nid': "Nominee NID cannot be the same as the member's NID."})
+        user_phone = None
+        try:
+            if hasattr(self, 'user') and self.user and self.user.phone:
+                user_phone = self.user.phone
+        except Exception:
+            user_phone = None
+        if self.nominee_phone and user_phone and self.nominee_phone == user_phone:
+            raise ValidationError({'nominee_phone': "Nominee mobile number cannot be the same as the member's mobile number."})
+
     def save(self, *args, **kwargs):
         if not self.member_id:
-            # Auto-generate Member ID like TNS-0001
+            # Auto-generate Member ID like TNS-MEM-0001
             last_member = MemberProfile.objects.exclude(member_id='').order_by('-id').first()
-            if last_member and last_member.id:
-                next_id = last_member.id + 1
-            else:
-                next_id = 1
-            self.member_id = f"TNS-MEM-{next_id:04d}"
+            next_id = (last_member.id + 1) if (last_member and last_member.id) else 1
+            candidate_id = f"TNS-MEM-{next_id:04d}"
+            counter = 1
+            while MemberProfile.objects.filter(member_id=candidate_id).exists():
+                candidate_id = f"TNS-MEM-{(next_id + counter):04d}"
+                counter += 1
+            self.member_id = candidate_id
         super().save(*args, **kwargs)
 
     def __str__(self):

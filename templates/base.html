@@ -175,10 +175,6 @@
  
  Daily Master Daybook
  </a>
- <a href="{% url 'core:financial_reports' %}" class="{% if 'reports' in request.path and not 'daily-transactions' in request.path %}active{% endif %}">
- 
- Financial Reports
- </a>
  {% endif %}
 
  <div class="nav-section-title">Personal</div>
@@ -237,7 +233,6 @@
  <div class="page-title-area"
  style="margin-left: 0.5rem; border-left: 1px solid var(--border-color); padding-left: 1rem;">
  <h1>{% block page_title %}Dashboard{% endblock %}</h1>
- <p>{% block page_subtitle %}Touch and Solve Micro Finance Co-operative{% endblock %}</p>
  </div>
  </div>
 

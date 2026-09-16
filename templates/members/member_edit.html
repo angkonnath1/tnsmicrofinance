@@ -2,7 +2,6 @@
 
 {% block title %}Edit Member - {{ profile.member_id }}{% endblock %}
 {% block page_title %}Edit Member Details{% endblock %}
-{% block page_subtitle %}Update profile and KYC information for {{ profile.member_id }}{% endblock %}
 
 {% block content %}
 <div style="max-width: 900px; margin: 0 auto;">
@@ -12,122 +11,192 @@
  <span class="badge {{ profile.get_status_badge }}">{{ profile.get_status_display }}</span>
  </div>
  <div class="card-body">
- <form method="post">
- {% csrf_token %}
+        <form method="post">
+          {% csrf_token %}
 
- <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
- 1. Basic Details
- </h4>
+          {% if form.errors %}
+          <div class="alert alert-danger" style="margin-bottom: 1.5rem; background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 1rem; border-radius: 8px;">
+            <div style="font-weight: 700; margin-bottom: 0.35rem;">Please correct the errors below:</div>
+            <ul style="margin: 0 0 0 1.25rem; padding: 0; font-size: 0.85rem;">
+              {% for field in form %}
+                {% for error in field.errors %}
+                  <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
 
- <div class="form-row">
- <div class="form-group">
- <label class="form-label">First Name</label>
- {{ form.first_name }}
- </div>
- <div class="form-group">
- <label class="form-label">Last Name</label>
- {{ form.last_name }}
- </div>
- </div>
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            1. Basic Details
+          </h4>
 
- <div class="form-row">
- <div class="form-group">
- <label class="form-label">Phone Number</label>
- {{ form.phone }}
- </div>
- <div class="form-group">
- <label class="form-label">Email Address</label>
- {{ form.email }}
- </div>
- </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">First Name *</label>
+              {{ form.first_name }}
+              {% if form.first_name.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.first_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Last Name *</label>
+              {{ form.last_name }}
+              {% if form.last_name.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.last_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
 
- <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 1.5rem 0 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
- 2. Personal &amp; KYC
- </h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Phone Number *</label>
+              {{ form.phone }}
+              {% if form.phone.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.phone.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              {{ form.email }}
+              {% if form.email.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.email.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
 
- <div class="form-row">
- <div class="form-group">
- <label class="form-label">National ID (NID)</label>
- {{ form.nid_number }}
- </div>
- <div class="form-group">
- <label class="form-label">Gender</label>
- {{ form.gender }}
- </div>
- <div class="form-group">
- <label class="form-label">Date of Birth</label>
- {{ form.date_of_birth }}
- </div>
- </div>
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 1.5rem 0 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            2. Personal &amp; KYC
+          </h4>
 
- <div class="form-row">
- <div class="form-group">
- <label class="form-label">Father / Husband Name</label>
- {{ form.father_or_husband_name }}
- </div>
- <div class="form-group">
- <label class="form-label">Mother Name</label>
- {{ form.mother_name }}
- </div>
- <div class="form-group">
- <label class="form-label">Occupation</label>
- {{ form.occupation }}
- </div>
- </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">National ID (NID)</label>
+              {{ form.nid_number }}
+              {% if form.nid_number.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.nid_number.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Gender</label>
+              {{ form.gender }}
+              {% if form.gender.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.gender.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Date of Birth</label>
+              {{ form.date_of_birth }}
+              {% if form.date_of_birth.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.date_of_birth.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
 
- <div class="form-row">
- <div class="form-group">
- <label class="form-label">Present Address</label>
- {{ form.present_address }}
- </div>
- <div class="form-group">
- <label class="form-label">Permanent Address</label>
- {{ form.permanent_address }}
- </div>
- </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Father / Husband Name</label>
+              {{ form.father_or_husband_name }}
+              {% if form.father_or_husband_name.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.father_or_husband_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mother Name</label>
+              {{ form.mother_name }}
+              {% if form.mother_name.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.mother_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Occupation</label>
+              {{ form.occupation }}
+              {% if form.occupation.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.occupation.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
 
- <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 1.5rem 0 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
- 3. Nominee &amp; Assignment
- </h4>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Present Address</label>
+              {{ form.present_address }}
+              {% if form.present_address.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.present_address.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Permanent Address</label>
+              {{ form.permanent_address }}
+              {% if form.permanent_address.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.permanent_address.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
 
- <div class="form-row">
- <div class="form-group">
- <label class="form-label">Nominee Name</label>
- {{ form.nominee_name }}
- </div>
- <div class="form-group">
- <label class="form-label">Relationship</label>
- {{ form.nominee_relation }}
- </div>
- </div>
+          <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--primary); margin: 1.5rem 0 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            3. Nominee &amp; Assignment
+          </h4>
 
- <div class="form-row">
- <div class="form-group">
- <label class="form-label">Nominee Phone</label>
- {{ form.nominee_phone }}
- </div>
- <div class="form-group">
- <label class="form-label">Nominee NID</label>
- {{ form.nominee_nid }}
- </div>
- </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nominee Name</label>
+              {{ form.nominee_name }}
+              {% if form.nominee_name.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.nominee_name.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Relationship</label>
+              {{ form.nominee_relation }}
+              {% if form.nominee_relation.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.nominee_relation.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
 
- <div class="form-row">
- <div class="form-group">
- <label class="form-label">Assigned Field Officer</label>
- {{ form.assigned_officer }}
- </div>
- <div class="form-group">
- <label class="form-label">Status</label>
- {{ form.status }}
- </div>
- </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nominee Phone</label>
+              {{ form.nominee_phone }}
+              {% if form.nominee_phone.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.nominee_phone.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Nominee NID</label>
+              {{ form.nominee_nid }}
+              {% if form.nominee_nid.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.nominee_nid.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
 
- <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem;">
- <a href="{% url 'members:member_detail' profile.id %}" class="btn btn-secondary">Cancel</a>
- <button type="submit" class="btn btn-primary">Save Changes</button>
- </div>
- </form>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Assigned Field Officer</label>
+              {{ form.assigned_officer }}
+              {% if form.assigned_officer.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.assigned_officer.errors.0 }}</div>
+              {% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status</label>
+              {{ form.status }}
+              {% if form.status.errors %}
+              <div style="color: var(--danger); font-size: 0.75rem; margin-top: 3px;">{{ form.status.errors.0 }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 2rem;">
+            <a href="{% url 'members:member_detail' profile.id %}" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
  </div>
  </div>
 </div>

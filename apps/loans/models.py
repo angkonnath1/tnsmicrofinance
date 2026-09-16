@@ -1,14 +1,16 @@
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from decimal import Decimal
 from datetime import timedelta
 from django.utils import timezone
 from apps.members.models import MemberProfile
+from apps.core.validators import validate_bd_phone, validate_nid_number, validate_positive_amount
 
 class LoanScheme(models.Model):
     name = models.CharField(max_length=100)
-    min_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('5000.00'))
-    max_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('500000.00'))
+    min_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('5000.00'), validators=[validate_positive_amount])
+    max_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('500000.00'), validators=[validate_positive_amount])
     interest_rate_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('10.00'), help_text="Flat interest rate percentage")
     duration_months = models.IntegerField(default=12, help_text="Duration in months")
     installment_frequency = models.CharField(
@@ -18,6 +20,17 @@ class LoanScheme(models.Model):
     )
     description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
+
+    def clean(self):
+        super().clean()
+        if self.min_amount is not None and self.min_amount <= Decimal('0.00'):
+            raise ValidationError({'min_amount': "Minimum loan amount must be greater than zero."})
+        if self.min_amount is not None and self.max_amount is not None and self.max_amount < self.min_amount:
+            raise ValidationError({'max_amount': "Maximum loan amount cannot be less than minimum loan amount."})
+        if self.interest_rate_percent is not None and (self.interest_rate_percent < Decimal('0.00') or self.interest_rate_percent > Decimal('100.00')):
+            raise ValidationError({'interest_rate_percent': "Interest rate must be between 0% and 100%."})
+        if self.duration_months is not None and (self.duration_months < 1 or self.duration_months > 120):
+            raise ValidationError({'duration_months': "Loan duration must be between 1 and 120 months."})
 
     def __str__(self):
         return f"{self.name} ({self.interest_rate_percent}%)"
@@ -49,7 +62,7 @@ class LoanApplication(models.Model):
         related_name='loans'
     )
     loan_id = models.CharField(max_length=30, unique=True, blank=True)
-    principal_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    principal_amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[validate_positive_amount])
     interest_rate = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('10.00'))
     duration_months = models.IntegerField(default=12)
     installment_frequency = models.CharField(max_length=10, choices=FREQUENCY_CHOICES, default='MONTHLY')
@@ -60,8 +73,8 @@ class LoanApplication(models.Model):
     
     purpose = models.CharField(max_length=255)
     guarantor_name = models.CharField(max_length=100)
-    guarantor_phone = models.CharField(max_length=20)
-    guarantor_nid = models.CharField(max_length=50, blank=True, null=True)
+    guarantor_phone = models.CharField(max_length=20, validators=[validate_bd_phone])
+    guarantor_nid = models.CharField(max_length=50, blank=True, null=True, validators=[validate_nid_number])
     guarantor_relation = models.CharField(max_length=50, blank=True, null=True)
 
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='PENDING')
@@ -79,6 +92,24 @@ class LoanApplication(models.Model):
 
     class Meta:
         ordering = ['-applied_at']
+
+    def clean(self):
+        super().clean()
+        if self.principal_amount is not None and self.principal_amount <= Decimal('0.00'):
+            raise ValidationError({'principal_amount': "Principal amount must be greater than zero."})
+        if self.loan_product and self.principal_amount is not None:
+            if self.principal_amount < self.loan_product.min_amount or self.principal_amount > self.loan_product.max_amount:
+                raise ValidationError({
+                    'principal_amount': f"Loan amount must be between ৳{self.loan_product.min_amount} and ৳{self.loan_product.max_amount} for '{self.loan_product.name}'."
+                })
+        if self.duration_months is not None and (self.duration_months < 1 or self.duration_months > 120):
+            raise ValidationError({'duration_months': "Loan duration must be between 1 and 120 months."})
+        if self.guarantor_phone and hasattr(self, 'member') and self.member and hasattr(self.member, 'user') and self.member.user:
+            if self.guarantor_phone == self.member.user.phone:
+                raise ValidationError({'guarantor_phone': "Guarantor phone cannot be the borrower's own phone number."})
+        if self.guarantor_nid and hasattr(self, 'member') and self.member and self.member.nid_number:
+            if self.guarantor_nid == self.member.nid_number:
+                raise ValidationError({'guarantor_nid': "Guarantor NID cannot be the borrower's own NID."})
 
     def save(self, *args, **kwargs):
         # Auto-calculate totals

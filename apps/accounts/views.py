@@ -154,7 +154,7 @@ def profile_view(request):
         })
 
     # Staff / Officer profile management
-    assigned_members = []
+    assigned_members = MemberProfile.objects.none()
     active_loans_count = 0
     if request.user.is_officer_user:
         assigned_members = request.user.assigned_members.select_related('user').order_by('-joined_date')
@@ -177,7 +177,7 @@ def profile_view(request):
         'form': form,
         'profile': None,
         'assigned_members': assigned_members,
-        'assigned_members_count': assigned_members.count() if hasattr(assigned_members, 'count') else len(assigned_members),
+        'assigned_members_count': assigned_members.count(),
         'active_loans_count': active_loans_count,
     })
 

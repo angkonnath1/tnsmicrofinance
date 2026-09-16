@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from apps.core.validators import validate_bd_phone, validate_image_file
 
 class CustomUser(AbstractUser):
     ROLE_CHOICES = (
@@ -9,9 +10,9 @@ class CustomUser(AbstractUser):
     )
     
     role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='MEMBER')
-    phone = models.CharField(max_length=20, blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True, validators=[validate_bd_phone])
     address = models.TextField(blank=True, null=True)
-    profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True, validators=[validate_image_file])
     is_approved = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.core.validators import MinValueValidator
 from decimal import Decimal
 from apps.members.models import MemberProfile
 
@@ -10,7 +11,7 @@ class SavingsAccount(models.Model):
         related_name='savings_account'
     )
     account_number = models.CharField(max_length=40, unique=True)
-    balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'))
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0.00'))])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -19,7 +20,7 @@ class SavingsAccount(models.Model):
 
     def deposit(self, amount):
         amount = Decimal(str(amount))
-        if amount > 0:
+        if amount > Decimal('0.00'):
             self.balance += amount
             self.save(update_fields=['balance', 'updated_at'])
             return True
@@ -27,7 +28,7 @@ class SavingsAccount(models.Model):
 
     def withdraw(self, amount):
         amount = Decimal(str(amount))
-        if 0 < amount <= self.balance:
+        if Decimal('0.00') < amount <= self.balance:
             self.balance -= amount
             self.save(update_fields=['balance', 'updated_at'])
             return True
@@ -59,7 +60,7 @@ class SavingsTransaction(models.Model):
         related_name='transactions'
     )
     transaction_type = models.CharField(max_length=15, choices=TRANSACTION_TYPE_CHOICES, default='DEPOSIT')
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='CASH')
     reference_note = models.CharField(max_length=255, blank=True, null=True)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='APPROVED')

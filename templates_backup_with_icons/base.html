@@ -221,13 +221,6 @@
           </svg>
           Daily Master Daybook
         </a>
-        <a href="{% url 'core:financial_reports' %}" class="{% if 'reports' in request.path and not 'daily-transactions' in request.path %}active{% endif %}">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-          Financial Reports
-        </a>
         {% endif %}
 
         <div class="nav-section-title">Personal</div>
@@ -286,7 +279,6 @@
           <div class="page-title-area"
             style="margin-left: 0.5rem; border-left: 1px solid var(--border-color); padding-left: 1rem;">
             <h1>{% block page_title %}Dashboard{% endblock %}</h1>
-            <p>{% block page_subtitle %}Touch and Solve Micro Finance Co-operative{% endblock %}</p>
           </div>
         </div>
 

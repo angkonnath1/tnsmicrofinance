@@ -3,7 +3,6 @@
 
 {% block title %}{{ profile.member_id }} - {{ profile.user.get_full_name }}{% endblock %}
 {% block page_title %}{{ profile.member_id }}{% endblock %}
-{% block page_subtitle %}{{ profile.user.get_full_name|default:profile.user.username }} &bull; Joined {{ profile.joined_date|date:"F d, Y" }}{% endblock %}
 
 {% block content %}
 

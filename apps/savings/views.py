@@ -458,6 +458,10 @@ def add_money_online_view(request):
 
     if request.method == 'POST':
         amount_str = request.POST.get('amount', '').strip()
+        if '-' in amount_str:
+            messages.error(request, "Negative amounts and the '-' character are not allowed.")
+            return redirect('savings:add_money_online')
+
         try:
             amount = Decimal(amount_str)
             if amount < Decimal('50.00'):

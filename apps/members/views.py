@@ -104,9 +104,15 @@ def member_create_view(request):
                 profile.save()
 
                 # Step 4: Automatically provision default Savings Account
+                acc_num = f"SAV-{profile.member_id.replace('TNS-MEM-', '')}"
+                counter = 1
+                base_acc = acc_num
+                while SavingsAccount.objects.filter(account_number=acc_num).exists():
+                    acc_num = f"{base_acc}-{counter}"
+                    counter += 1
                 SavingsAccount.objects.create(
                     member=profile,
-                    account_number=f"SAV-{profile.member_id.replace('TNS-MEM-', '')}"
+                    account_number=acc_num
                 )
 
             messages.success(request, f"Member '{profile.member_id} - {user.get_full_name()}' registered successfully!")

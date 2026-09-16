@@ -3,7 +3,6 @@
 
 {% block title %}Loan {{ loan.loan_id }} - Touch &amp; Solve{% endblock %}
 {% block page_title %}Loan {{ loan.loan_id }}{% endblock %}
-{% block page_subtitle %}{{ loan.member.user.get_full_name }} &bull; Applied on {{ loan.applied_at|date:"F d, Y" }}{% endblock %}
 
 {% block content %}
 <!-- Top Metrics Cards -->
@@ -69,78 +68,6 @@
  </div>
 </div>
 {% endif %}
-
-
-
-<!-- Loan Meta & Guarantor info -->
-<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
- <div class="content-card" style="margin-bottom: 0;">
- <div class="card-header">
- <div class="card-title">Loan Specification</div>
- <span style="font-size: 0.8rem; color: #64748b;">Applied: {{ loan.applied_at|date:"M d, Y" }}</span>
- </div>
- <div class="card-body">
- <div
- style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; font-size: 0.85rem;">
- <div>
- <span style="color: #64748b; font-size: 0.75rem;">Purpose:</span>
- <div><strong>{{ loan.purpose }}</strong></div>
- </div>
- <div>
- <span style="color: #64748b; font-size: 0.75rem;">Product Scheme:</span>
- <div>{{ loan.loan_product.name|default:"Standard Micro Loan" }}</div>
- </div>
- <div>
- <span style="color: #64748b; font-size: 0.75rem;">Disbursed Date:</span>
- <div>{{ loan.disbursed_at|date:"M d, Y"|default:"Not Yet Disbursed" }}</div>
- </div>
- <div>
- <span style="color: #64748b; font-size: 0.75rem;">Status:</span>
- <div style="margin-top: 3px;"><span class="badge {{ loan.get_status_badge }}"
- style="font-size: 0.78rem; padding: 2px 8px;">{{ loan.get_status_display }}</span></div>
- </div>
- <div>
- <span style="color: #64748b; font-size: 0.75rem;">Repayment Frequency:</span>
- <div>{{ loan.get_installment_frequency_display }}</div>
- </div>
- <div>
- <span style="color: #64748b; font-size: 0.75rem;">Approved By:</span>
- <div>{{ loan.approved_by.username|default:"Pending" }}</div>
- </div>
- </div>
-
- <div style="margin-top: 1.25rem;">
- <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 6px;">
- <span>Repayment Progress</span>
- <strong>{{ loan.progress_percentage }}% Completed</strong>
- </div>
- <div style="background: #e2e8f0; border-radius: 9999px; height: 10px; width: 100%; overflow: hidden;">
- <div style="background: var(--accent); height: 100%; width: {{ loan.progress_percentage }}%;"></div>
- </div>
- </div>
- </div>
- </div>
-
- <div class="content-card" style="margin-bottom: 0;">
- <div class="card-header">
- <div class="card-title">Guarantor Information</div>
- </div>
- <div class="card-body" style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.5rem;">
- <div>
- <span style="color: #64748b; font-size: 0.75rem;">Name:</span>
- <div><strong>{{ loan.guarantor_name }}</strong></div>
- </div>
- <div>
- <span style="color: #64748b; font-size: 0.75rem;">Phone:</span>
- <div>{{ loan.guarantor_phone }}</div>
- </div>
- <div>
- <span style="color: #64748b; font-size: 0.75rem;">NID / Relation:</span>
- <div>{{ loan.guarantor_nid|default:'-' }} ({{ loan.guarantor_relation|default:'-' }})</div>
- </div>
- </div>
- </div>
-</div>
 
 <!-- Installment Schedule Table -->
 <div class="content-card">

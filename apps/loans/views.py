@@ -89,7 +89,7 @@ def apply_loan_view(request):
         return redirect('loans:my_loans')
 
     if request.method == 'POST':
-        form = MemberLoanApplicationForm(request.POST)
+        form = MemberLoanApplicationForm(request.POST, applicant_member=profile)
         if form.is_valid():
             loan = form.save(commit=False)
             loan.member = profile
@@ -121,7 +121,7 @@ def apply_loan_view(request):
                 }
             except LoanScheme.DoesNotExist:
                 pass
-        form = MemberLoanApplicationForm(initial=initial)
+        form = MemberLoanApplicationForm(initial=initial, applicant_member=profile)
 
     schemes = LoanScheme.objects.filter(is_active=True)
     return render(request, 'loans/apply_loan.html', {
