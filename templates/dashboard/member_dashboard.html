@@ -49,7 +49,7 @@
         <div class="card-header">
             <div class="card-title">My Active Loans</div>
             <a href="{% url 'loans:my_loans' %}"
-                style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">View All </a>
+                style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">View All</a>
         </div>
         <div class="table-responsive">
             <table class="table">
@@ -59,7 +59,6 @@
                         <th>Principal</th>
                         <th>Progress</th>
                         <th>Status</th>
-                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -73,11 +72,8 @@
                         </td>
                         <td>{{ loan.principal_amount|clean_amount }} BDT</td>
                         <td style="min-width: 100px;">
-                            <div
-                                style="background: #e2e8f0; border-radius: 9999px; height: 6px; width: 100%; overflow: hidden; margin-bottom: 2px;">
-                                <div
-                                    style="background: var(--accent); height: 100%; width: {{ loan.progress_percentage }}%;">
-                                </div>
+                            <div style="background: #e2e8f0; border-radius: 9999px; height: 6px; width: 100%; overflow: hidden; margin-bottom: 2px;">
+                                <div style="background: var(--accent); height: 100%; width: {{ loan.progress_percentage }}%;"></div>
                             </div>
                             <div style="font-size: 0.65rem; color: #64748b;">{{ loan.progress_percentage }}% Paid</div>
                         </td>
@@ -100,8 +96,7 @@
         <div class="card-header">
             <div class="card-title">Recent Savings Activity</div>
             <a href="{% url 'savings:my_savings' %}"
-                style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">Full
-                Statement </a>
+                style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">Full Statement</a>
         </div>
         <div class="table-responsive">
             <table class="table">
