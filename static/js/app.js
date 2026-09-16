@@ -1,278 +1,165 @@
 /**
- * ==============================================================================
- * Touch and Solve Microfinance - Simple JavaScript Helper Script
- * Author: Junior Developer / Learning Project
- * Description: Clean helper functions for sidebar toggling, notifications, 
- *              dialog modals, and client-side loan calculations.
- * ==============================================================================
+ * Touch and Solve Microfinance - Core Application Scripts
+ * Features: Sidebar toggle, modal dialogs, dynamic loan calculator,
+ * member search autocomplete, and numeric-only input enforcement.
  */
-
-// Run our scripts once the full HTML document has loaded
 document.addEventListener('DOMContentLoaded', () => {
 
   /* --------------------------------------------------------------------------
-     1. SIDEBAR CONTROLLER (Open, Close, Toggle)
+     1. SIDEBAR & MODALS
      -------------------------------------------------------------------------- */
-  
-  // Function to open the sidebar
-  window.openSidebar = function(e) {
-    if (e) { 
-      e.preventDefault(); 
-      e.stopPropagation(); 
-    }
-    const sidebar = document.getElementById('app-sidebar');
-    const backdrop = document.getElementById('sidebar-backdrop');
-    
-    if (sidebar) sidebar.classList.add('show');
-    if (backdrop) backdrop.classList.add('show');
-    document.body.style.overflow = 'hidden'; // Stop background page scrolling
+  const sidebar = () => document.getElementById('app-sidebar');
+  const backdrop = () => document.getElementById('sidebar-backdrop');
+
+  window.openSidebar = (e) => {
+    e?.preventDefault();
+    sidebar()?.classList.add('show');
+    backdrop()?.classList.add('show');
+    document.body.style.overflow = 'hidden';
   };
 
-  // Function to close the sidebar
-  window.closeSidebar = function(e) {
-    if (e) { 
-      e.preventDefault(); 
-      e.stopPropagation(); 
-    }
-    const sidebar = document.getElementById('app-sidebar');
-    const backdrop = document.getElementById('sidebar-backdrop');
-    
-    if (sidebar) sidebar.classList.remove('show');
-    if (backdrop) backdrop.classList.remove('show');
-    document.body.style.overflow = ''; // Re-enable background scrolling
+  window.closeSidebar = (e) => {
+    e?.preventDefault();
+    sidebar()?.classList.remove('show');
+    backdrop()?.classList.remove('show');
+    document.body.style.overflow = '';
   };
 
-  // Function to toggle sidebar open or closed
-  window.toggleSidebar = function(e) {
-    if (e) { 
-      e.preventDefault(); 
-      e.stopPropagation(); 
-    }
-    const sidebar = document.getElementById('app-sidebar');
-    if (sidebar && sidebar.classList.contains('show')) {
-      window.closeSidebar(e);
-    } else {
-      window.openSidebar(e);
-    }
+  window.toggleSidebar = (e) => {
+    sidebar()?.classList.contains('show') ? window.closeSidebar(e) : window.openSidebar(e);
   };
 
-  // Attach click listeners to the toggle and close buttons
-  const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
-  const sidebarCloseBtn = document.getElementById('sidebar-close-btn');
-  const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+  document.getElementById('sidebar-toggle-btn')?.addEventListener('click', window.toggleSidebar);
+  document.getElementById('sidebar-close-btn')?.addEventListener('click', window.closeSidebar);
+  document.getElementById('sidebar-backdrop')?.addEventListener('click', window.closeSidebar);
 
-  if (sidebarToggleBtn) sidebarToggleBtn.onclick = window.toggleSidebar;
-  if (sidebarCloseBtn) sidebarCloseBtn.onclick = window.closeSidebar;
-  if (sidebarBackdrop) sidebarBackdrop.onclick = window.closeSidebar;
+  // Modals
+  window.openModal = (id) => document.getElementById(id)?.classList.add('active');
+  window.closeModal = (id) => document.getElementById(id)?.classList.remove('active');
 
-  // Pressing 'Escape' key on keyboard also closes the sidebar
+  // Close modals or sidebar on Escape key
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       window.closeSidebar();
+      document.querySelectorAll('.modal-backdrop.active').forEach(m => m.classList.remove('active'));
     }
   });
 
-
-
-  /* --------------------------------------------------------------------------
-     3. POPUP MODAL HANDLERS
-     -------------------------------------------------------------------------- */
-  // Open modal by element ID
-  window.openModal = function (modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.add('active');
+  // Close modals when clicking background backdrop
+  document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-backdrop')) {
+      e.target.classList.remove('active');
     }
-  };
-
-  // Close modal by element ID
-  window.closeModal = function (modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.remove('active');
-    }
-  };
-
-  // Close modals when user clicks outside the modal box
-  document.querySelectorAll('.modal-backdrop').forEach((backdrop) => {
-    backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) {
-        backdrop.classList.remove('active');
-      }
-    });
   });
 
   /* --------------------------------------------------------------------------
-     4. LOAN ESTIMATE CALCULATOR
-     Calculates interest and installments dynamically for both Monthly and Weekly schedules.
+     2. DYNAMIC LOAN CALCULATOR
      -------------------------------------------------------------------------- */
   const amountInput = document.querySelector('input[name="principal_amount"]');
   const durationInput = document.querySelector('input[name="duration_months"]');
   const frequencySelect = document.querySelector('select[name="installment_frequency"]');
   const productSelect = document.querySelector('select[name="loan_product"]');
   const calcResult = document.getElementById('loan-calc-summary');
-  const schemesDataEl = document.getElementById('loan-schemes-data');
 
   let schemesData = {};
-  if (schemesDataEl) {
-    try {
-      schemesData = JSON.parse(schemesDataEl.textContent.trim());
-    } catch (e) {
-      console.error('Error parsing schemes data', e);
-    }
+  try {
+    const el = document.getElementById('loan-schemes-data');
+    if (el) schemesData = JSON.parse(el.textContent.trim());
+  } catch (e) {
+    console.error('Error parsing schemes data', e);
   }
 
-  function updateLoanCalculation() {
+  function updateLoanCalc() {
     if (!amountInput || !durationInput || !calcResult) return;
-    
-    // Read input values
     const amount = parseFloat(amountInput.value) || 0;
     const months = parseInt(durationInput.value) || 0;
-    const frequency = frequencySelect ? frequencySelect.value : 'MONTHLY';
-
-    // Determine interest rate from scheme or standard fallback 10%
-    let rate = 10.0;
-    let schemeName = '';
-    if (productSelect && productSelect.value && schemesData[productSelect.value]) {
-      const currentScheme = schemesData[productSelect.value];
-      rate = parseFloat(currentScheme.rate) || 10.0;
-      schemeName = currentScheme.name;
-    }
+    const frequency = frequencySelect?.value || 'MONTHLY';
+    const scheme = productSelect && schemesData[productSelect.value];
+    const rate = scheme ? (parseFloat(scheme.rate) || 10.0) : 10.0;
 
     if (amount > 0 && months > 0) {
-      // Formula matches apps/loans/models.py: Interest = Principal * (Rate / 100) * (Months / 12)
-      const interest = (amount * (rate / 100.0) * (months / 12.0));
-      const totalPayable = amount + interest;
+      const interest = amount * (rate / 100.0) * (months / 12.0);
+      const total = amount + interest;
+      const isWeekly = frequency === 'WEEKLY';
+      const installments = isWeekly ? months * 4 : months;
+      const perInstallment = total / (installments || 1);
 
-      const isWeekly = (frequency === 'WEEKLY');
-      const numInstallments = isWeekly ? (months * 4) : months;
-      const installmentAmount = totalPayable / (numInstallments || 1);
-      const principalPart = amount / (numInstallments || 1);
-      const interestPart = interest / (numInstallments || 1);
-
-      // Show simple summary box with calculated numbers
       calcResult.innerHTML = `
         <div style="background: #f8fafc; border: 1px solid #dee2e6; border-radius: 6px; padding: 12px 14px; margin-top: 12px; font-size: 0.85rem;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span style="color: #6c757d;">Principal Amount:</span> 
+            <span style="color: #6c757d;">Principal Amount:</span>
             <strong>৳${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-            <span style="color: #6c757d;">Estimated Interest (${rate}%):</span> 
+            <span style="color: #6c757d;">Estimated Interest (${rate}%):</span>
             <strong>৳${interest.toFixed(2)}</strong>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-            <span style="color: #6c757d;">Total Repayable:</span> 
-            <strong style="color: #0d6efd;">৳${totalPayable.toFixed(2)}</strong>
+            <span style="color: #6c757d;">Total Repayable:</span>
+            <strong style="color: #0d6efd;">৳${total.toFixed(2)}</strong>
           </div>
           <div style="display: flex; justify-content: space-between; padding-top: 6px; border-top: 1px dashed #dee2e6;">
-            <span style="color: #6c757d;">
-              ${isWeekly ? 'Weekly Installment (' + numInstallments + ' weeks):' : 'Monthly Installment (' + numInstallments + ' months):'}
-            </span> 
-            <strong style="color: #198754; font-size: 0.95rem;">
-              ৳${installmentAmount.toFixed(2)} / ${isWeekly ? 'week' : 'month'}
-            </strong>
+            <span style="color: #6c757d;">${isWeekly ? 'Weekly Installment (' + installments + ' weeks):' : 'Monthly Installment (' + installments + ' months):'}</span>
+            <strong style="color: #198754; font-size: 0.95rem;">৳${perInstallment.toFixed(2)} / ${isWeekly ? 'week' : 'month'}</strong>
           </div>
-        </div>
-      `;
+        </div>`;
     } else {
       calcResult.innerHTML = '';
     }
   }
 
-  // Scheme select change listener
-  if (productSelect) {
-    productSelect.addEventListener('change', () => {
-      const selectedId = productSelect.value;
-      const scheme = schemesData[selectedId];
-      if (scheme) {
-        if (durationInput && scheme.duration_months) {
-          durationInput.value = scheme.duration_months;
-        }
-        if (frequencySelect && scheme.installment_frequency) {
-          frequencySelect.value = scheme.installment_frequency;
-        }
-        if (amountInput && (!amountInput.value || parseFloat(amountInput.value) === 0)) {
-          amountInput.value = scheme.min_amount || '';
-        }
+  productSelect?.addEventListener('change', () => {
+    const scheme = schemesData[productSelect.value];
+    if (scheme) {
+      if (durationInput && scheme.duration_months) durationInput.value = scheme.duration_months;
+      if (frequencySelect && scheme.installment_frequency) frequencySelect.value = scheme.installment_frequency;
+      if (amountInput && (!amountInput.value || parseFloat(amountInput.value) === 0)) {
+        amountInput.value = scheme.min_amount || '';
       }
-      updateLoanCalculation();
-    });
-  }
+    }
+    updateLoanCalc();
+  });
 
-  // Recalculate whenever user types in the input boxes or changes frequency
-  if (amountInput) amountInput.addEventListener('input', updateLoanCalculation);
-  if (durationInput) durationInput.addEventListener('input', updateLoanCalculation);
-  if (frequencySelect) frequencySelect.addEventListener('change', updateLoanCalculation);
-
-  // Initial calculation check on page load if inputs have prefilled values
-  updateLoanCalculation();
+  amountInput?.addEventListener('input', updateLoanCalc);
+  durationInput?.addEventListener('input', updateLoanCalc);
+  frequencySelect?.addEventListener('change', updateLoanCalc);
+  updateLoanCalc();
 
   /* --------------------------------------------------------------------------
-     5. MEMBER SEARCH AUTOCOMPLETE
-     Enables dynamic search input with keyword suggestions for member selects.
+     3. MEMBER SEARCH AUTOCOMPLETE
      -------------------------------------------------------------------------- */
-  const membersDataEl = document.getElementById('active-members-data');
-  let globalMembersList = [];
-  if (membersDataEl) {
+  function initMemberSearch() {
+    const searchInputs = document.querySelectorAll('.member-search-input');
+    if (!searchInputs.length) return;
+
+    let globalMembers = [];
     try {
-      globalMembersList = JSON.parse(membersDataEl.textContent.trim());
+      const el = document.getElementById('active-members-data');
+      if (el) globalMembers = JSON.parse(el.textContent.trim());
     } catch (e) {
       console.error('Error parsing members data', e);
     }
-  }
-
-  function initMemberSearch() {
-    const searchInputs = document.querySelectorAll('.member-search-input');
-    if (!searchInputs || searchInputs.length === 0) return;
 
     searchInputs.forEach(input => {
       const wrapper = input.closest('.member-search-box-wrapper');
       if (!wrapper) return;
-
-      const targetSelector = input.getAttribute('data-target-select');
-      const targetSelect = targetSelector ? document.querySelector(targetSelector) : null;
+      const targetSelect = document.querySelector(input.getAttribute('data-target-select') || '');
       const clearBtn = wrapper.querySelector('.member-search-clear');
       const dropdown = wrapper.querySelector('.member-suggestions-dropdown');
       const container = wrapper.closest('.form-group');
-      const indicator = container ? container.querySelector('.selected-member-indicator') : null;
+      const indicator = container?.querySelector('.selected-member-indicator');
 
-      // Use global members list if available, or fallback to select options
-      let availableMembers = globalMembersList;
-      if (!availableMembers || availableMembers.length === 0) {
-        if (targetSelect) {
-          availableMembers = Array.from(targetSelect.options)
-            .filter(opt => opt.value)
-            .map(opt => {
-              const parts = opt.text.split(' - ');
-              return {
-                id: opt.value,
-                member_id: parts[0] ? parts[0].trim() : '',
-                name: parts.slice(1).join(' - ').trim() || opt.text,
-                phone: ''
-              };
-            });
-        }
-      }
+      let members = globalMembers.length ? globalMembers : (targetSelect ? Array.from(targetSelect.options).filter(o => o.value).map(o => {
+        const parts = o.text.split(' - ');
+        return { id: o.value, member_id: parts[0]?.trim() || '', name: parts.slice(1).join(' - ').trim() || o.text, phone: '' };
+      }) : []);
 
       let activeIndex = -1;
 
-      function updateIndicator(member) {
+      function setIndicator(m) {
         if (!indicator) return;
-        if (member) {
-          indicator.innerHTML = `<span>✓</span> <div><strong>Selected:</strong> ${member.name} (${member.member_id}) ${member.phone ? '&bull; 📞 ' + member.phone : ''}</div>`;
-          indicator.style.display = 'flex';
-        } else {
-          indicator.innerHTML = '';
-          indicator.style.display = 'none';
-        }
-      }
-
-      function highlightMatch(text, query) {
-        if (!text) return '';
-        if (!query) return text;
-        const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-        return text.replace(regex, '<span style="background: #fef08a; color: #854d0e; font-weight: 700; border-radius: 2px; padding: 0 2px;">$1</span>');
+        indicator.innerHTML = m ? `<span>✓</span> <div><strong>Selected:</strong> ${m.name} (${m.member_id}) ${m.phone ? '&bull; 📞 ' + m.phone : ''}</div>` : '';
+        indicator.style.display = m ? 'flex' : 'none';
       }
 
       function renderSuggestions(query) {
@@ -280,164 +167,140 @@ document.addEventListener('DOMContentLoaded', () => {
         const q = (query || '').trim().toLowerCase();
         activeIndex = -1;
 
-        let matches = availableMembers;
-        if (q) {
-          matches = availableMembers.filter(m => {
-            const nameMatch = m.name && m.name.toLowerCase().includes(q);
-            const idMatch = m.member_id && m.member_id.toLowerCase().includes(q);
-            const phoneMatch = m.phone && m.phone.toLowerCase().includes(q);
-            return nameMatch || idMatch || phoneMatch;
-          });
-        }
+        const matches = q ? members.filter(m =>
+          (m.name && m.name.toLowerCase().includes(q)) ||
+          (m.member_id && m.member_id.toLowerCase().includes(q)) ||
+          (m.phone && m.phone.toLowerCase().includes(q))
+        ) : members;
 
-        if (matches.length === 0) {
-          dropdown.innerHTML = `
-            <div style="padding: 12px; text-align: center; color: #94a3b8; font-size: 0.82rem;">
-              No members found matching "<strong>${q}</strong>"
-            </div>
-          `;
+        if (!matches.length) {
+          dropdown.innerHTML = `<div style="padding: 12px; text-align: center; color: #94a3b8; font-size: 0.82rem;">No members found matching "<strong>${q}</strong>"</div>`;
           dropdown.style.display = 'block';
           return;
         }
 
-        dropdown.innerHTML = matches.map((m, index) => `
-          <div class="member-suggestion-item" data-id="${m.id}" data-index="${index}" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+        const hl = (txt) => q ? String(txt).replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi'), '<mark style="background:#fef08a;color:#854d0e;padding:0 2px;border-radius:2px;">$1</mark>') : txt;
+
+        dropdown.innerHTML = matches.map((m, idx) => `
+          <div class="member-suggestion-item" data-id="${m.id}" data-index="${idx}" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <div class="member-name-text" style="font-weight: 600; font-size: 0.86rem; color: #1e293b;">
-                ${highlightMatch(m.name, q)}
-              </div>
-              <div class="member-meta-text" style="font-size: 0.74rem; color: #64748b; margin-top: 1px;">
-                ${m.phone ? '📞 ' + highlightMatch(m.phone, q) : 'Member'} ${m.email ? '&bull; ' + m.email : ''}
-              </div>
+              <div style="font-weight: 600; font-size: 0.86rem; color: #1e293b;">${hl(m.name || '')}</div>
+              <div style="font-size: 0.74rem; color: #64748b;">${m.phone ? '📞 ' + hl(m.phone) : 'Member'} ${m.email ? '&bull; ' + m.email : ''}</div>
             </div>
-            <span class="badge badge-primary" style="font-size: 0.72rem; padding: 2px 6px;">
-              ${highlightMatch(m.member_id, q)}
-            </span>
+            <span class="badge badge-primary" style="font-size: 0.72rem; padding: 2px 6px;">${hl(m.member_id || '')}</span>
           </div>
         `).join('');
 
-        dropdown.style.display = 'block';
-
-        // Add mouse interactions
         dropdown.querySelectorAll('.member-suggestion-item').forEach(item => {
-          item.addEventListener('mouseenter', () => {
+          item.onmouseenter = () => {
             dropdown.querySelectorAll('.member-suggestion-item').forEach(i => i.classList.remove('active'));
             item.classList.add('active');
-          });
-          item.addEventListener('click', () => {
-            const memberId = item.getAttribute('data-id');
-            const selected = availableMembers.find(m => String(m.id) === String(memberId));
-            if (selected) selectMember(selected);
-          });
+          };
+          item.onclick = () => {
+            const found = members.find(m => String(m.id) === item.dataset.id);
+            if (found) selectMember(found);
+          };
         });
+        dropdown.style.display = 'block';
       }
 
-      function selectMember(member) {
-        if (targetSelect) {
-          targetSelect.value = member.id;
-          targetSelect.dispatchEvent(new Event('change'));
-        }
-        input.value = `${member.member_id} - ${member.name}`;
+      function selectMember(m) {
+        if (targetSelect) { targetSelect.value = m.id; targetSelect.dispatchEvent(new Event('change')); }
+        input.value = `${m.member_id} - ${m.name}`;
         if (clearBtn) clearBtn.style.display = 'block';
-        updateIndicator(member);
+        setIndicator(m);
         if (dropdown) dropdown.style.display = 'none';
       }
 
-      function clearSelection() {
-        if (targetSelect) {
-          targetSelect.value = '';
-          targetSelect.dispatchEvent(new Event('change'));
-        }
+      function clearMember() {
+        if (targetSelect) { targetSelect.value = ''; targetSelect.dispatchEvent(new Event('change')); }
         input.value = '';
         if (clearBtn) clearBtn.style.display = 'none';
-        updateIndicator(null);
+        setIndicator(null);
         renderSuggestions('');
         input.focus();
       }
 
-      // Input typing events
-      input.addEventListener('input', () => {
-        const val = input.value;
-        if (clearBtn) clearBtn.style.display = val ? 'block' : 'none';
-        renderSuggestions(val);
-      });
-
-      input.addEventListener('focus', () => {
+      input.oninput = () => {
+        if (clearBtn) clearBtn.style.display = input.value ? 'block' : 'none';
         renderSuggestions(input.value);
-      });
+      };
+      input.onfocus = () => renderSuggestions(input.value);
 
-      // Keyboard navigation
-      input.addEventListener('keydown', (e) => {
+      input.onkeydown = (e) => {
         if (!dropdown || dropdown.style.display === 'none') return;
         const items = dropdown.querySelectorAll('.member-suggestion-item');
-        if (!items || items.length === 0) return;
+        if (!items.length) return;
 
-        if (e.key === 'ArrowDown') {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
           e.preventDefault();
-          activeIndex = (activeIndex + 1) % items.length;
+          activeIndex = e.key === 'ArrowDown' ? (activeIndex + 1) % items.length : (activeIndex - 1 + items.length) % items.length;
           items.forEach((it, idx) => it.classList.toggle('active', idx === activeIndex));
-          items[activeIndex].scrollIntoView({ block: 'nearest' });
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          activeIndex = (activeIndex - 1 + items.length) % items.length;
-          items.forEach((it, idx) => it.classList.toggle('active', idx === activeIndex));
-          items[activeIndex].scrollIntoView({ block: 'nearest' });
+          items[activeIndex]?.scrollIntoView({ block: 'nearest' });
         } else if (e.key === 'Enter') {
           e.preventDefault();
-          if (activeIndex >= 0 && items[activeIndex]) {
-            items[activeIndex].click();
-          } else if (items[0]) {
-            items[0].click();
-          }
+          (items[activeIndex] || items[0])?.click();
         } else if (e.key === 'Escape') {
           dropdown.style.display = 'none';
         }
-      });
+      };
 
-      if (clearBtn) {
-        clearBtn.addEventListener('click', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          clearSelection();
-        });
-      }
+      if (clearBtn) clearBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); clearMember(); };
 
-      // Sync if target select is changed directly
       if (targetSelect) {
-        targetSelect.addEventListener('change', () => {
-          const val = targetSelect.value;
-          const found = availableMembers.find(m => String(m.id) === String(val));
+        const syncFromSelect = () => {
+          const found = members.find(m => String(m.id) === String(targetSelect.value));
           if (found) {
             input.value = `${found.member_id} - ${found.name}`;
             if (clearBtn) clearBtn.style.display = 'block';
-            updateIndicator(found);
-          } else if (!val) {
+            setIndicator(found);
+          } else if (!targetSelect.value) {
             input.value = '';
             if (clearBtn) clearBtn.style.display = 'none';
-            updateIndicator(null);
+            setIndicator(null);
           }
-        });
-
-        // Initialize display if targetSelect has initial value
-        if (targetSelect.value) {
-          const initial = availableMembers.find(m => String(m.id) === String(targetSelect.value));
-          if (initial) {
-            input.value = `${initial.member_id} - ${initial.name}`;
-            if (clearBtn) clearBtn.style.display = 'block';
-            updateIndicator(initial);
-          }
-        }
+        };
+        targetSelect.addEventListener('change', syncFromSelect);
+        if (targetSelect.value) syncFromSelect();
       }
 
-      // Close dropdown when clicking outside
       document.addEventListener('click', (e) => {
-        if (!wrapper.contains(e.target)) {
-          if (dropdown) dropdown.style.display = 'none';
-        }
+        if (!wrapper.contains(e.target) && dropdown) dropdown.style.display = 'none';
       });
     });
   }
 
-  // Initialize Member Search on page load
   initMemberSearch();
+
+  /* --------------------------------------------------------------------------
+     4. NUMERIC-ONLY INPUT RESTRICTION (Phone Numbers & National ID / NID)
+     -------------------------------------------------------------------------- */
+  function enforceNumericInputs() {
+    const allowed = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+    document.querySelectorAll('input[name*="phone"], input[name*="nid"], input[id*="phone"], input[id*="nid"]').forEach(input => {
+      input.setAttribute('inputmode', 'numeric');
+      input.setAttribute('pattern', '[0-9]*');
+
+      input.addEventListener('keydown', (e) => {
+        if (allowed.includes(e.key) || e.ctrlKey || e.metaKey) return;
+        if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+      });
+
+      input.addEventListener('input', function() {
+        const cleaned = this.value.replace(/\D/g, '');
+        if (this.value !== cleaned) this.value = cleaned;
+      });
+
+      input.addEventListener('paste', function(e) {
+        e.preventDefault();
+        const digits = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
+        const s = this.selectionStart || 0, end = this.selectionEnd || 0;
+        this.value = (this.value || '').substring(0, s) + digits + (this.value || '').substring(end);
+        this.selectionStart = this.selectionEnd = s + digits.length;
+        this.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
+  }
+
+  enforceNumericInputs();
 });

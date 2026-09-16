@@ -1,8 +1,9 @@
-from django import forms
 from decimal import Decimal
-from .models import LoanApplication, LoanScheme, LoanInstallment
+from django import forms
+from .models import LoanApplication, LoanScheme
 from apps.members.models import MemberProfile
-from apps.core.validators import validate_bd_phone, validate_nid_number, validate_positive_amount
+from apps.core.validators import validate_bd_phone, validate_nid_number
+
 
 class MemberLoanApplicationForm(forms.ModelForm):
     loan_product = forms.ModelChoiceField(
@@ -55,58 +56,38 @@ class MemberLoanApplicationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.applicant_member = applicant_member
 
-    def clean_principal_amount(self):
-        amount = self.cleaned_data.get('principal_amount')
-        if amount is not None:
-            validate_positive_amount(amount)
-        return amount
-
     def clean_guarantor_phone(self):
         phone = (self.cleaned_data.get('guarantor_phone') or '').strip()
-        if phone:
-            phone = validate_bd_phone(phone)
-        return phone
+        return validate_bd_phone(phone) if phone else ''
 
     def clean_guarantor_nid(self):
         nid = (self.cleaned_data.get('guarantor_nid') or '').strip()
-        if nid:
-            nid = validate_nid_number(nid)
-        return nid
+        return validate_nid_number(nid) if nid else ''
 
     def clean(self):
-        cleaned_data = super().clean()
-        loan_product = cleaned_data.get('loan_product')
-        principal_amount = cleaned_data.get('principal_amount')
+        cleaned = super().clean()
+        product = cleaned.get('loan_product')
+        amount = cleaned.get('principal_amount')
 
-        if loan_product and principal_amount is not None:
-            if principal_amount < loan_product.min_amount:
-                self.add_error(
-                    'principal_amount',
-                    f"Selected scheme '{loan_product.name}' requires a minimum amount of ৳{loan_product.min_amount}."
-                )
-            elif principal_amount > loan_product.max_amount:
-                self.add_error(
-                    'principal_amount',
-                    f"Selected scheme '{loan_product.name}' allows a maximum amount of ৳{loan_product.max_amount}."
-                )
+        if product and amount is not None:
+            if amount < product.min_amount:
+                self.add_error('principal_amount', f"Scheme '{product.name}' requires minimum ৳{product.min_amount}.")
+            elif amount > product.max_amount:
+                self.add_error('principal_amount', f"Scheme '{product.name}' allows maximum ৳{product.max_amount}.")
 
         member = self.applicant_member
-        guarantor_phone = cleaned_data.get('guarantor_phone')
-        guarantor_nid = cleaned_data.get('guarantor_nid')
+        g_phone = cleaned.get('guarantor_phone')
+        g_nid = cleaned.get('guarantor_nid')
 
         if member:
-            if hasattr(member, 'user') and member.user and member.user.phone:
-                if guarantor_phone and guarantor_phone == member.user.phone:
-                    self.add_error('guarantor_phone', "Guarantor phone cannot be the applicant's own phone number.")
-            if member.nid_number and guarantor_nid:
-                if guarantor_nid == member.nid_number:
-                    self.add_error('guarantor_nid', "Guarantor NID cannot be the applicant's own NID.")
-
-            # Check for defaulted loans
+            if hasattr(member, 'user') and member.user and member.user.phone and g_phone == member.user.phone:
+                self.add_error('guarantor_phone', "Guarantor phone cannot be the applicant's own phone.")
+            if member.nid_number and g_nid and g_nid == member.nid_number:
+                self.add_error('guarantor_nid', "Guarantor NID cannot be the applicant's own NID.")
             if LoanApplication.objects.filter(member=member, status='DEFAULTED').exists():
                 raise forms.ValidationError("Member has an unresolved defaulted loan and is not eligible for a new loan.")
 
-        return cleaned_data
+        return cleaned
 
 
 class StaffLoanApplicationForm(MemberLoanApplicationForm):
@@ -123,8 +104,6 @@ class StaffLoanApplicationForm(MemberLoanApplicationForm):
         member = self.cleaned_data.get('member')
         if member:
             self.applicant_member = member
-            if member.status != 'ACTIVE':
-                self.add_error('member', "Loans can only be created for active members.")
         return super().clean()
 
 
@@ -142,27 +121,3 @@ class LoanSchemeForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
-
-    def clean_name(self):
-        return (self.cleaned_data.get('name') or '').strip()
-
-    def clean(self):
-        cleaned_data = super().clean()
-        min_amount = cleaned_data.get('min_amount')
-        max_amount = cleaned_data.get('max_amount')
-        rate = cleaned_data.get('interest_rate_percent')
-        duration = cleaned_data.get('duration_months')
-
-        if min_amount is not None and min_amount <= Decimal('0.00'):
-            self.add_error('min_amount', "Minimum amount must be greater than zero.")
-
-        if min_amount is not None and max_amount is not None and max_amount < min_amount:
-            self.add_error('max_amount', "Maximum amount cannot be less than minimum amount.")
-
-        if rate is not None and (rate < Decimal('0.00') or rate > Decimal('100.00')):
-            self.add_error('interest_rate_percent', "Interest rate must be between 0% and 100%.")
-
-        if duration is not None and (duration < 1 or duration > 120):
-            self.add_error('duration_months', "Duration must be between 1 and 120 months.")
-
-        return cleaned_data

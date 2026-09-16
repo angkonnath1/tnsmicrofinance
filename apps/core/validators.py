@@ -14,14 +14,19 @@ def validate_bd_phone(value):
     """
     Validates mobile phone number format.
     Accepts Bangladeshi standard 11-digit numbers (013-019) with or without +88/88 prefix,
-    or general international phone numbers.
+    or general international phone numbers. Strictly allows only numeric digits.
     """
     if not value:
         return value
-    clean_val = re.sub(r'[\s\-\(\)]', '', str(value))
-    if not (BD_PHONE_REGEX.match(clean_val) or INTL_PHONE_REGEX.match(clean_val)):
+    clean_val = re.sub(r'[\s\-\(\)\+]', '', str(value))
+    if not clean_val.isdigit():
         raise ValidationError(
-            _("Please enter a valid mobile number (e.g. 01712345678 or +8801712345678)."),
+            _("Phone number must contain numbers only. Letters or characters are not allowed."),
+            code='invalid_phone_characters'
+        )
+    if not (BD_PHONE_REGEX.match(clean_val) or INTL_PHONE_REGEX.match(clean_val) or re.match(r'^(?:88)?01[3-9]\d{8}$', clean_val)):
+        raise ValidationError(
+            _("Please enter a valid mobile number (e.g. 01712345678)."),
             code='invalid_phone'
         )
     return clean_val

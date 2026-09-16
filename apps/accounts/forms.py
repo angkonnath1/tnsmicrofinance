@@ -1,9 +1,15 @@
 from django import forms
-from django.contrib.auth import authenticate
-from django.contrib.auth.forms import UserCreationForm
 from django.db.models import Q
 from .models import CustomUser
-from apps.core.validators import validate_bd_phone, validate_image_file
+from apps.core.validators import validate_image_file
+from apps.core.utils import clean_phone_unique, clean_email_unique
+
+DIGIT_ATTRS = {
+    'inputmode': 'numeric',
+    'pattern': '[0-9]*',
+    'oninput': "this.value = this.value.replace(/[^0-9]/g, '')",
+}
+
 
 class LoginForm(forms.Form):
     username = forms.CharField(
@@ -13,34 +19,25 @@ class LoginForm(forms.Form):
         widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password', 'id': 'password_input'})
     )
 
-    def clean_username(self):
-        return self.cleaned_data.get('username', '').strip()
-
-    def clean_password(self):
-        return self.cleaned_data.get('password', '').strip()
-
     def clean(self):
         cleaned_data = super().clean()
-        username = cleaned_data.get('username')
-        password = cleaned_data.get('password')
+        username = (cleaned_data.get('username') or '').strip()
+        password = (cleaned_data.get('password') or '').strip()
 
         if username and password:
             user_obj = CustomUser.objects.filter(Q(username__iexact=username) | Q(email__iexact=username)).first()
             if user_obj and user_obj.check_password(password):
-                # Check member KYC review status if member
                 if hasattr(user_obj, 'member_profile'):
                     profile = user_obj.member_profile
                     if profile.status == 'PENDING' or not user_obj.is_active:
                         raise forms.ValidationError(
-                            f"⏳ Account ({profile.member_id}) is pending KYC verification and officer approval. You will be able to log in as soon as an officer approves your registration."
+                            f"Account ({profile.member_id}) is pending KYC verification and officer approval."
                         )
                     elif profile.status == 'REJECTED':
-                        reason_msg = f" Reason: {profile.rejection_reason}" if profile.rejection_reason else ""
-                        raise forms.ValidationError(
-                            f"❌ Your membership application was rejected by the officer.{reason_msg} Please contact Touch & Solve office."
-                        )
+                        reason = f" Reason: {profile.rejection_reason}" if profile.rejection_reason else ""
+                        raise forms.ValidationError(f"Your membership application was rejected.{reason}")
                     elif profile.status == 'INACTIVE' or not user_obj.is_active:
-                        raise forms.ValidationError("This member account has been deactivated. Please contact your field officer.")
+                        raise forms.ValidationError("This member account has been deactivated.")
                 elif not user_obj.is_active:
                     raise forms.ValidationError("This account has been deactivated.")
 
@@ -48,6 +45,7 @@ class LoginForm(forms.Form):
             else:
                 raise forms.ValidationError("Invalid username/email or password.")
         return cleaned_data
+
 
 class OfficerCreationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control'}), min_length=6)
@@ -61,42 +59,25 @@ class OfficerCreationForm(forms.ModelForm):
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile Number (e.g. 01712345678)', **DIGIT_ATTRS}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
     def clean_username(self):
-        username = (self.cleaned_data.get('username') or '').strip()
-        if CustomUser.objects.filter(username__iexact=username).exists():
+        uname = (self.cleaned_data.get('username') or '').strip()
+        if CustomUser.objects.filter(username__iexact=uname).exists():
             raise forms.ValidationError("A user with this username already exists.")
-        return username
+        return uname
 
     def clean_phone(self):
-        phone = (self.cleaned_data.get('phone') or '').strip()
-        if phone:
-            phone = validate_bd_phone(phone)
-            if CustomUser.objects.filter(phone=phone).exists():
-                raise forms.ValidationError("This mobile phone number is already registered to another user.")
-        return phone
+        return clean_phone_unique(self.cleaned_data.get('phone'))
 
     def clean_email(self):
-        email = (self.cleaned_data.get('email') or '').strip()
-        if email:
-            if CustomUser.objects.filter(email__iexact=email).exists():
-                raise forms.ValidationError("This email address is already registered.")
-        return email
-
-    def clean_password(self):
-        password = self.cleaned_data.get("password", "")
-        if len(password) < 6:
-            raise forms.ValidationError("Password must be at least 6 characters long.")
-        return password
+        return clean_email_unique(self.cleaned_data.get('email'))
 
     def clean(self):
         cleaned_data = super().clean()
-        password = cleaned_data.get("password")
-        confirm_password = cleaned_data.get("confirm_password")
-        if password and confirm_password and password != confirm_password:
+        if cleaned_data.get("password") != cleaned_data.get("confirm_password"):
             raise forms.ValidationError("Passwords do not match.")
         return cleaned_data
 
@@ -108,6 +89,7 @@ class OfficerCreationForm(forms.ModelForm):
             user.save()
         return user
 
+
 class UserProfileForm(forms.ModelForm):
     class Meta:
         model = CustomUser
@@ -116,34 +98,19 @@ class UserProfileForm(forms.ModelForm):
             'first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Mobile Number', **DIGIT_ATTRS}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'profile_picture': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
     def clean_phone(self):
-        phone = (self.cleaned_data.get('phone') or '').strip()
-        if phone:
-            phone = validate_bd_phone(phone)
-            query = CustomUser.objects.filter(phone=phone)
-            if self.instance.pk:
-                query = query.exclude(pk=self.instance.pk)
-            if query.exists():
-                raise forms.ValidationError("This phone number is already used by another account.")
-        return phone
+        return clean_phone_unique(self.cleaned_data.get('phone'), exclude_user_id=self.instance.pk)
 
     def clean_email(self):
-        email = (self.cleaned_data.get('email') or '').strip()
-        if email:
-            query = CustomUser.objects.filter(email__iexact=email)
-            if self.instance.pk:
-                query = query.exclude(pk=self.instance.pk)
-            if query.exists():
-                raise forms.ValidationError("This email address is already in use by another account.")
-        return email
+        return clean_email_unique(self.cleaned_data.get('email'), exclude_user_id=self.instance.pk)
 
     def clean_profile_picture(self):
         photo = self.cleaned_data.get('profile_picture')
-        if photo:
+        if photo and hasattr(photo, 'file'):
             validate_image_file(photo)
         return photo

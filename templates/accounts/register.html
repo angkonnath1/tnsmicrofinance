@@ -225,12 +225,40 @@
  }
  }
 
- document.addEventListener('DOMContentLoaded', function () {
- setupImagePreview('input[name="member_photo"]', 'member-photo-preview-box');
- setupImagePreview('input[name="nid_photo"]', 'nid-photo-preview-box');
- setupImagePreview('input[name="nominee_photo"]', 'nominee-photo-preview-box');
- });
- </script>
+    document.addEventListener('DOMContentLoaded', function () {
+      setupImagePreview('input[name="member_photo"]', 'member-photo-preview-box');
+      setupImagePreview('input[name="nid_photo"]', 'nid-photo-preview-box');
+      setupImagePreview('input[name="nominee_photo"]', 'nominee-photo-preview-box');
+
+      // Restrict phone and NID inputs to digits only
+      const numericInputs = document.querySelectorAll(
+        'input[name*="phone"], input[name*="nid"], input[id*="phone"], input[id*="nid"]'
+      );
+      numericInputs.forEach(function (input) {
+        input.setAttribute('inputmode', 'numeric');
+        input.setAttribute('pattern', '[0-9]*');
+        input.addEventListener('keydown', function (e) {
+          const allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'];
+          if (allowedKeys.includes(e.key) || e.ctrlKey || e.metaKey) return;
+          if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+        });
+        input.addEventListener('input', function () {
+          this.value = this.value.replace(/[^0-9]/g, '');
+        });
+        input.addEventListener('paste', function (e) {
+          e.preventDefault();
+          const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+          const digitsOnly = text.replace(/[^0-9]/g, '');
+          const start = this.selectionStart || 0;
+          const end = this.selectionEnd || 0;
+          const currentVal = this.value || '';
+          this.value = currentVal.substring(0, start) + digitsOnly + currentVal.substring(end);
+          this.selectionStart = this.selectionEnd = start + digitsOnly.length;
+          this.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+      });
+    });
+  </script>
  {% include 'includes/agentation.html' %}
 </body>
 </html>

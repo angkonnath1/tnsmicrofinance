@@ -3,13 +3,14 @@ import re
 import shutil
 import sys
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMPLATES_DIR = os.path.join(BASE_DIR, 'templates')
-BACKUP_DIR = os.path.join(BASE_DIR, 'templates_backup_with_icons')
+BACKUP_DIR = os.path.join(BASE_DIR, 'backups', 'templates_backup_with_icons')
 CSS_FILE = os.path.join(BASE_DIR, 'static', 'css', 'style.css')
-CSS_BACKUP = os.path.join(BASE_DIR, 'static', 'css', 'style.css.with_icons_backup')
+CSS_BACKUP = os.path.join(BASE_DIR, 'backups', 'style.css.with_icons_backup')
 
 def ensure_backup():
+    os.makedirs(os.path.dirname(BACKUP_DIR), exist_ok=True)
     if not os.path.exists(BACKUP_DIR):
         print("Creating backup of templates in:", BACKUP_DIR)
         shutil.copytree(TEMPLATES_DIR, BACKUP_DIR)
@@ -36,7 +37,6 @@ def remove_icons():
             matches = list(svg_regex.finditer(content))
             total_svg_removed += len(matches)
 
-            # 1. Base header controls
             if file == 'base.html':
                 content = re.sub(
                     r'<button[^>]*id="sidebar-close-btn"[^>]*>[\s\S]*?</button>',
@@ -44,7 +44,6 @@ def remove_icons():
                     content,
                     flags=re.IGNORECASE
                 )
-
                 content = re.sub(
                     r'<a href="{% url \'notifications:list\' %}"[^>]*title="Notifications">[\s\S]*?</a>',
                     """<a href="{% url 'notifications:list' %}" class="btn btn-sm btn-secondary" style="position: relative; display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 600; text-decoration: none;" title="Notifications">
@@ -56,7 +55,6 @@ def remove_icons():
                     content
                 )
 
-            # 2. Photo preview boxes
             if file in ['member_create.html', 'register.html']:
                 content = re.sub(
                     r'(<div[^>]*class="photo-preview-box"[^>]*>)\s*<svg[\s\S]*?</svg>\s*(</div>)',
@@ -65,10 +63,8 @@ def remove_icons():
                     flags=re.IGNORECASE
                 )
 
-            # 3. Strip SVGs
             content = svg_regex.sub('', content)
 
-            # 3b. Add back the 3-bar hamburger icon specifically to #sidebar-toggle-btn in base.html
             if file == 'base.html':
                 content = re.sub(
                     r'<button[^>]*id="sidebar-toggle-btn"[^>]*>[\s\S]*?</button>',
@@ -83,17 +79,14 @@ def remove_icons():
                     flags=re.IGNORECASE
                 )
 
-            # 4. Strip button emojis
             for emo in emojis:
                 content = content.replace(emo + ' ', '')
                 content = content.replace(emo, '')
 
-            # 5. Remove checkmarks & cross symbols
             content = re.sub(r'(&check;|[\u2713\u2714])\s*', '', content)
             content = re.sub(r'([\u2715\u2716])\s*Reject Application', 'Reject Application', content)
             content = re.sub(r'&times;\s*Reject Application', 'Reject Application', content)
 
-            # 6. Modal close buttons & search clear buttons
             content = re.sub(
                 r'(<button\b[^>]*class="[^"]*btn-sm btn-secondary[^"]*"[^>]*onclick="closeModal\([^)]+\)"[^>]*>)\s*&times;\s*(</button>)',
                 r'\1Close\2',
@@ -110,17 +103,14 @@ def remove_icons():
                 content
             )
 
-            # 7. Strip arrows (&rarr;, &larr;, etc.)
             content = re.sub(r'\s*(&rarr;|&larr;|→|←)\s*', ' ', content)
 
-            # 8. Pagination arrows
             if file == 'pagination.html':
                 content = content.replace('&laquo; First', 'First')
                 content = content.replace('&lsaquo; Prev', 'Prev')
                 content = content.replace('Next &rsaquo;', 'Next')
                 content = content.replace('Last &raquo;', 'Last')
 
-            # Clean empty stat icon wrap
             content = re.sub(r'<div class="stat-icon-wrap[^"]*">\s*</div>\s*', '', content)
 
             if content != original:
@@ -128,7 +118,6 @@ def remove_icons():
                     f.write(content)
                 modified_files += 1
 
-    # Update CSS
     if os.path.exists(CSS_FILE):
         with open(CSS_FILE, 'r', encoding='utf-8') as f:
             css_content = f.read()
@@ -138,8 +127,7 @@ def remove_icons():
                 f.write(css_addition)
 
     print(f"\n[DONE] Successfully removed all SVG icons and button icons across {modified_files} template files.")
-    print("All originals are safely stored in 'templates_backup_with_icons'.")
-    print("To restore all icons, run: python manage_icons.py restore")
+    print(f"All originals are safely stored in '{BACKUP_DIR}'.")
 
 def restore_icons():
     if not os.path.exists(BACKUP_DIR):
@@ -163,4 +151,4 @@ if __name__ == '__main__':
     elif action == 'restore':
         restore_icons()
     else:
-        print("Usage: python manage_icons.py [remove|restore]")
+        print("Usage: python scripts/manage_icons.py [remove|restore]")

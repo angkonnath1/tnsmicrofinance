@@ -13,18 +13,8 @@
             <div class="stat-label">Total Savings Balance</div>
             <div class="stat-value" style="color: var(--accent);">{{ account.balance|clean_amount }} <span
                     style="font-size: 0.9rem;">BDT</span></div>
-            <div class="stat-subtitle">A/C: {{ account.account_number }}</div>
         </div>
     </div>
-
-    <!-- Outstanding Loan
- <div class="stat-card">
- <div class="stat-details">
- <div class="stat-label">Outstanding Loan Balance</div>
- <div class="stat-value">{{ total_loan_outstanding|clean_amount }} <span style="font-size: 0.9rem;">BDT</span></div>
- <div class="stat-subtitle">{{ active_loans.count }} Active Loan(s)</div>
- </div>
- </div> -->
 
     <!-- Next Upcoming Installment -->
     <div class="stat-card">
@@ -73,6 +63,7 @@
                         <th>Principal</th>
                         <th>Progress</th>
                         <th>Status</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>

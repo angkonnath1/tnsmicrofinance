@@ -26,8 +26,7 @@
 
  <!-- Instant Real-Time Search Box -->
  <div style="position: relative; margin-bottom: 0.35rem;">
- <input type="text" id="loanSearchInput" class="form-control form-control-sm" placeholder="🔍 Search loan ID (e.g. 0001), name, or phone..." style="padding-left: 28px; padding-right: 28px; font-size: 0.8rem; background: #f8fafc; border-color: #cbd5e1;" autocomplete="off">
- <span style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; color: #94a3b8; pointer-events: none;">🔍</span>
+ <input type="text" id="loanSearchInput" class="form-control form-control-sm" placeholder="Search loan ID (e.g. 0001), name, or phone..." style="padding-left: 12px; padding-right: 28px; font-size: 0.8rem; background: #f8fafc; border-color: #cbd5e1;" autocomplete="off">
  <button type="button" id="clearLoanSearch" style="display: none; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 0.75rem; color: #94a3b8; cursor: pointer; padding: 2px;">Clear</button>
  </div>
 
@@ -112,7 +111,7 @@
  <div style="font-weight: 800; font-size: 1.1rem; color: var(--accent);">{{ loan.progress_percentage }}% Paid</div>
  <div style="font-size: 0.75rem; color: #64748b;">Paid: {{ paid_count }} / {{ loan.total_installments }} installments</div>
  {% if overdue_count > 0 %}
- <div style="color: #dc2626; font-size: 0.75rem; font-weight: 700;">⚠ {{ overdue_count }} Overdue Installments</div>
+ <div style="color: #dc2626; font-size: 0.75rem; font-weight: 700;">{{ overdue_count }} Overdue Installments</div>
  {% endif %}
  </div>
  </div>
@@ -150,7 +149,7 @@
 
  <!-- Installment Schedule Table -->
  <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
- <span>📅</span> Amortization Installments &amp; Repayment Schedule
+ Amortization Installments &amp; Repayment Schedule
  </h4>
 
  <div class="table-responsive" style="margin-bottom: 2.5rem;">
@@ -164,7 +163,7 @@
  <th style="text-align: right;">Total Due</th>
  <th style="text-align: right;">Paid Amount</th>
  <th>Paid Date</th>
- <th>Collected By</th>
+ <th>Method / Collected By</th>
  <th>Status</th>
  </tr>
  </thead>
@@ -180,7 +179,16 @@
  {% if inst.paid_amount > 0 %}{{ inst.paid_amount|clean_amount }} BDT{% else %}&mdash;{% endif %}
  </td>
  <td>{{ inst.paid_date|date:"M d, Y"|default:'&mdash;' }}</td>
- <td>{{ inst.collected_by.get_full_name|default:'&mdash;' }}</td>
+ <td>
+ {% if inst.status == 'PAID' %}
+ <span>{{ inst.get_payment_method_display }}</span>
+ {% if inst.collected_by %}
+ <div style="font-size: 0.7rem; color: #64748b;">By: {{ inst.collected_by.get_full_name }}</div>
+ {% endif %}
+ {% else %}
+ &mdash;
+ {% endif %}
+ </td>
  <td>
  <span class="badge {{ inst.get_status_badge }}">{{ inst.get_status_display }}</span>
  </td>
@@ -237,74 +245,32 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
- var searchInput = document.getElementById('loanSearchInput');
- var loanSelect = document.getElementById('loanSelect');
- var clearBtn = document.getElementById('clearLoanSearch');
- var countBadge = document.getElementById('loanCountBadge');
+    var searchInput = document.getElementById('loanSearchInput');
+    var loanSelect = document.getElementById('loanSelect');
+    var clearBtn = document.getElementById('clearLoanSearch');
 
- if (!searchInput || !loanSelect) return;
+    if (!searchInput || !loanSelect) return;
 
- var originalOptions = Array.from(loanSelect.options);
+    searchInput.addEventListener('input', function() {
+        var q = searchInput.value.toLowerCase().trim();
+        if (clearBtn) clearBtn.style.display = q ? 'block' : 'none';
+        Array.from(loanSelect.options).forEach(function(opt) {
+            var txt = ((opt.getAttribute('data-search') || '') + ' ' + opt.textContent).toLowerCase();
+            opt.hidden = q && !txt.includes(q);
+        });
+        var first = Array.from(loanSelect.options).find(function(o) { return !o.hidden; });
+        if (first && (loanSelect.selectedOptions.length === 0 || loanSelect.selectedOptions[0].hidden)) {
+            first.selected = true;
+        }
+    });
 
- function filterLoans() {
- var query = searchInput.value.toLowerCase().trim();
- if (query.length > 0) {
- if (clearBtn) clearBtn.style.display = 'block';
- } else {
- if (clearBtn) clearBtn.style.display = 'none';
- }
-
- var matches = [];
- originalOptions.forEach(function(opt) {
- var searchData = (opt.getAttribute('data-search') || opt.textContent).toLowerCase();
- var rawDigits = query.replace(/\D/g, '');
- var score = 0;
- if (!query) {
- score = 1;
- } else if (searchData.indexOf(query) === 0 || (rawDigits && searchData.indexOf(rawDigits) === 0)) {
- score = 100;
- } else if (searchData.indexOf(query) !== -1) {
- score = 50;
- }
- if (score > 0) {
- matches.push({ opt: opt, score: score });
- }
- });
-
- matches.sort(function(a, b) { return b.score - a.score; });
-
- originalOptions.forEach(function(opt) {
- opt.hidden = true;
- opt.style.display = 'none';
- });
-
- var visibleCount = matches.length;
- var firstVisibleOpt = matches.length > 0 ? matches[0].opt : null;
- matches.forEach(function(m) {
- m.opt.hidden = false;
- m.opt.style.display = '';
- });
-
- if (countBadge) {
- countBadge.textContent = query ? (visibleCount + ' found') : (originalOptions.length + ' loans');
- }
-
- if (loanSelect.selectedOptions.length === 0 || loanSelect.selectedOptions[0].hidden) {
- if (firstVisibleOpt) {
- firstVisibleOpt.selected = true;
- }
- }
- }
-
- searchInput.addEventListener('input', filterLoans);
-
- if (clearBtn) {
- clearBtn.addEventListener('click', function() {
- searchInput.value = '';
- filterLoans();
- searchInput.focus();
- });
- }
+    if (clearBtn) {
+        clearBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            searchInput.dispatchEvent(new Event('input'));
+            searchInput.focus();
+        });
+    }
 });
 </script>
 {% endblock %}

@@ -176,6 +176,13 @@ class LoanApplication(models.Model):
         return max(Decimal('0.00'), self.total_payable - self.total_paid)
 
     @property
+    def total_installments(self):
+        return self.installments.count()
+
+    def get_repayment_frequency_display(self):
+        return self.get_installment_frequency_display()
+
+    @property
     def progress_percentage(self):
         if self.total_payable > 0:
             return min(100, int((self.total_paid / self.total_payable) * 100))
