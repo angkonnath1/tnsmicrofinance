@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="background: #f8fafc; border: 1px solid #dee2e6; border-radius: 6px; padding: 12px 14px; margin-top: 12px; font-size: 0.85rem;">
           <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
             <span style="color: #6c757d;">Principal Amount:</span>
-            <strong>৳${amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong>
+            <strong>৳${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
           </div>
           <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
             <span style="color: #6c757d;">Estimated Interest (${rate}%):</span>
@@ -286,12 +286,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!/^[0-9]$/.test(e.key)) e.preventDefault();
       });
 
-      input.addEventListener('input', function() {
+      input.addEventListener('input', function () {
         const cleaned = this.value.replace(/\D/g, '');
         if (this.value !== cleaned) this.value = cleaned;
       });
 
-      input.addEventListener('paste', function(e) {
+      input.addEventListener('paste', function (e) {
         e.preventDefault();
         const digits = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '');
         const s = this.selectionStart || 0, end = this.selectionEnd || 0;
